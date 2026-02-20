@@ -1,40 +1,60 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from urllib.parse import quote_plus
 from dotenv import load_dotenv
 
+from urllib.parse import quote_plus
+# Load environment variables
 load_dotenv()
 
-# Get environment variables from Streamlit Secrets
+# DATABASE CONFIGURATION
+
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
+DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME")
 
-# Safety check (very important)
-if not all([DB_USER, DB_PASSWORD, DB_HOST, DB_NAME]):
-    raise ValueError("Database environment variables are missing!")
 
-# Encode password (important if special characters exist)
 encoded_password = quote_plus(DB_PASSWORD)
 
-# Create database URL
 DATABASE_URL = (
     f"postgresql://{DB_USER}:{encoded_password}"
     f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 
-# Supabase requires SSL
+
+# SQLALCHEMY ENGINE
+
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"sslmode": "require"}
+    pool_pre_ping=True,      # prevents stale connections
+    pool_size=5,             # connection pool size
+    max_overflow=10          # extra temporary connections
 )
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# SESSION FACTORY
+
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
+
+# BASE CLASS FOR MODELS
 
 Base = declarative_base()
 
-# Create tables automatically (only if models are imported)
-Base.metadata.create_all(bind=engine)
+
+# DEPENDENCY FUNCTION (OPTIONAL)
+
+def get_db():
+    """
+    Use this function when you want a safe DB session.
+    It automatically closes after use.
+    """
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
