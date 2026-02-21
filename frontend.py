@@ -2,8 +2,10 @@ import streamlit as st
 from langchain_core.messages import HumanMessage
 from crud import create_conversation, save_message, load_messages
 from graph import workflow   # your compiled LangGraph workflow
+from database import init_db
 
 
+init_db()
 # PAGE CONFIG
 
 st.set_page_config(page_title="Travel AI Agent", page_icon="✈️")

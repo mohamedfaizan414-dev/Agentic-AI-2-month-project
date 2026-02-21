@@ -19,8 +19,8 @@ def save_travel_context(conversation_id, data):
     context = TravelContext(
         conversation_id=conversation_id,
         destination=data.get("destination"),
-        start_date=data.get("start_date"),
-        end_date=data.get("end_date"),
+        departure_date=data.get("start_date"),
+        return_date=data.get("end_date"),
         budget=data.get("budget"),
         travelers=data.get("travelers"),
        
