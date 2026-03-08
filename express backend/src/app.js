@@ -6,7 +6,7 @@ const chatRoutes = require("./routes/chat.routes.js")
 app = express()
 app.use(cookieparser())
 app.use(cors({
-    origin: 'http://localhost:5173', 
+    origin: 'https://travelagent-ten.vercel.app', 
     credentials: true, 
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
