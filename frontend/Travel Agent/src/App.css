@@ -35,7 +35,7 @@ body { margin: 0; background: var(--navy-dark); color: #e2e8f0; font-family: 'Pl
   text-align: left;
 }
 
-.history-wrapper { flex: 1; margin-top: 30px; overflow-y: auto; }
+.history-wrapper { flex: 1; margin-top: 30px; overflow-y: auto; max-height: 60vh; }
 .history-wrapper label { font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 1px; }
 
 .history-item {
