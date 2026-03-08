@@ -32,7 +32,7 @@ const Login = () => {
                 password: formData.password
             };
 
-            const response = await axios.post('http://localhost:3000/api/auth/login', payload, {
+            const response = await axios.post('https://travel-agent-ltzc.onrender.com/api/auth/login', payload, {
                 withCredentials: true // This is REQUIRED to receive the cookie from res.cookie()
             });
 

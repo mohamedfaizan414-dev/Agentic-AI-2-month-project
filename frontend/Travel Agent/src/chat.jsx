@@ -28,8 +28,8 @@ const ChatPage = () => {
         const init = async () => {
             try {
                 const [userRes, sessRes] = await Promise.all([
-                    axios.get('http://localhost:3000/api/auth/me'),
-                    axios.get('http://localhost:3000/api/sessions')
+                    axios.get('https://travel-agent-ltzc.onrender.com/api/auth/me'),
+                    axios.get('https://travel-agent-ltzc.onrender.com/api/sessions')
                 ]);
 
                 setUser(userRes.data);
@@ -59,7 +59,7 @@ const ChatPage = () => {
         try {
 
             const res = await axios.get(
-                `http://localhost:3000/api/history/${sessionId}`
+                `https://travel-agent-ltzc.onrender.com/api/history/${sessionId}`
             );
 
             setMessages(res.data);
@@ -97,7 +97,7 @@ const ChatPage = () => {
         try {
 
             const res = await axios.post(
-                'http://localhost:3000/api/chat',
+                'https://travel-agent-ltzc.onrender.com/api/chat',
                 {
                     message: text,
                     conversationId: activeId
@@ -115,7 +115,7 @@ const ChatPage = () => {
                 setActiveId(res.data.conversationId);
 
                 const sessRes = await axios.get(
-                    'http://localhost:3000/api/sessions'
+                    'https://travel-agent-ltzc.onrender.com/api/sessions'
                 );
 
                 setSessions(sessRes.data);

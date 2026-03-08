@@ -19,7 +19,7 @@ const Register = () => {
         e.preventDefault();
         try {
             // Adjust the URL to match your Express signup route
-            const response = await axios.post('http://localhost:3000/api/auth/register', formData);
+            const response = await axios.post('https://travel-agent-ltzc.onrender.com/api/auth/register', formData);
             
             if (response.status === 201 || response.status === 200) {
                 setMessage('Registration successful! Redirecting to login...');
