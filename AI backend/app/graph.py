@@ -1,3 +1,5 @@
+import os
+
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.checkpoint.memory import MemorySaver
@@ -135,12 +137,12 @@ def check_train_availability(source: str, destination: str, date: str) -> str:
     Check train availability between two stations on a specific date.
     Input should be station codes (e.g., 'NDLS' for Delhi) and date in DD-MM-YYYY format.
     """
-    url = "https://irctc-api2.p.rapidapi.com/trainAvailability"
+    url = os.getenv("RapidAPI_url")
     
     # These match your curl --header flags
     headers = {
-        "x-rapidapi-host": "irctc-api2.p.rapidapi.com",
-        "x-rapidapi-key": "cee79b1dfcmshaf2a36793f1a265p134b6djsn3fa420931403" 
+        "x-rapidapi-host": os.getenv("RapidAPI_host"),
+        "x-rapidapi-key": os.getenv("RapidAPI_key")
     }
     
     # These match your curl --url query parameters
@@ -161,7 +163,7 @@ def check_train_availability(source: str, destination: str, date: str) -> str:
 @tool
 def currency_exchanger(base_amount:float,base_currency:str , target_currency:str) -> float:
     """ This function converts any currency from the base currency to target currency  """
-    url = f"https://v6.exchangerate-api.com/v6/a056af0e661eeb573f83141f/pair/{base_currency}/{target_currency}"
+    url = f"https://v6.exchangerate-api.com/v6/{os.getenv('EXCHANGE_RATE_API_KEY')}/pair/{base_currency}/{target_currency}"
     response = requests.get(url)
     data = response.json()
     convertion_rate  = data["conversion_rate"]
