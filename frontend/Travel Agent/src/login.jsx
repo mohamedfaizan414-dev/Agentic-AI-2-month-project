@@ -74,7 +74,7 @@ const Login = () => {
                     <button type="submit" style={styles.button}>Sign In</button>
                 </form>
                 <p style={styles.footer}>
-                    New here? <a href="/register">Create an account</a>
+                    New here? <a href="/register"  style={{ color: '#007bff' }}>Create an account</a>
                 </p>
             </div>
         </div>

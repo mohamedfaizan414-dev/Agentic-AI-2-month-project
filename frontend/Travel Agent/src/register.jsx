@@ -80,7 +80,7 @@ const styles = {
     form: { display: 'flex', flexDirection: 'column' },
     input: { padding: '12px', marginBottom: '15px', borderRadius: '6px', border: '1px solid #807979', fontSize: '16px', backgroundColor: '#171717', color: '#FFFFFF' },
     button: { padding: '12px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' },
-    feedback: { marginTop: '15px', color: '#d9534f', fontWeight: '500' }
+    feedback: { marginTop: '15px', color: '#2ce356', fontWeight: '500' }
 };
 
 export default Register;

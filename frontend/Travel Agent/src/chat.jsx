@@ -24,24 +24,31 @@ const ChatPage = () => {
 
 
     // Initialize user and sessions
-    useEffect(() => {
-        const init = async () => {
+// Initialize user and sessions
+useEffect(() => {
+    const init = async () => {
+        try {
+            
+            const userRes = await axios.get('https://travel-agent-ltzc.onrender.com/api/auth/me');
+            setUser(userRes.data);
+
+            
             try {
-                const [userRes, sessRes] = await Promise.all([
-                    axios.get('https://travel-agent-ltzc.onrender.com/api/auth/me'),
-                    axios.get('https://travel-agent-ltzc.onrender.com/api/sessions')
-                ]);
-
-                setUser(userRes.data);
+                const sessRes = await axios.get('https://travel-agent-ltzc.onrender.com/api/sessions');
                 setSessions(sessRes.data);
-
-            } catch (err) {
-                navigate('/login');
+            } catch (sessionErr) {
+                console.warn("Sessions failed to load, but user is authenticated.");
             }
-        };
 
-        init();
-    }, [navigate]);
+        } catch (err) {
+            
+            console.error("Auth failed:", err);
+            navigate('/login');
+        }
+    };
+
+    init();
+}, [navigate]);
 
 
     // Auto scroll
