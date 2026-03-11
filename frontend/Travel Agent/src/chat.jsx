@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import ChatMessage from './message.jsx';
 import './App.css';
 
-axios.defaults.withCredentials = true;
 
 const ChatPage = () => {
 
@@ -29,12 +28,16 @@ useEffect(() => {
     const init = async () => {
         try {
             
-            const userRes = await axios.get('https://travel-agent-ltzc.onrender.com/api/auth/me');
+            const userRes = await axios.get('https://travel-agent-ltzc.onrender.com/api/auth/me',{
+                withCredentials: true 
+            });
             setUser(userRes.data);
 
             
             try {
-                const sessRes = await axios.get('https://travel-agent-ltzc.onrender.com/api/sessions');
+                const sessRes = await axios.get('https://travel-agent-ltzc.onrender.com/api/sessions',{
+                withCredentials: true 
+            });
                 setSessions(sessRes.data);
             } catch (sessionErr) {
                 console.warn("Sessions failed to load, but user is authenticated.");
@@ -67,7 +70,9 @@ useEffect(() => {
 
             const res = await axios.get(
                 `https://travel-agent-ltzc.onrender.com/api/history/${sessionId}`
-            );
+            ,{
+                withCredentials: true 
+            });
 
             setMessages(res.data);
 
@@ -109,7 +114,9 @@ useEffect(() => {
                     message: text,
                     conversationId: activeId
                 }
-            );
+            ,{
+                withCredentials: true 
+            });
 
             setMessages(prev => [
                 ...prev,
@@ -123,7 +130,9 @@ useEffect(() => {
 
                 const sessRes = await axios.get(
                     'https://travel-agent-ltzc.onrender.com/api/sessions'
-                );
+                ,{
+                    withCredentials: true 
+                });
 
                 setSessions(sessRes.data);
 
