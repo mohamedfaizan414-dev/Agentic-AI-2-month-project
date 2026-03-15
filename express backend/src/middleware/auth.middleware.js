@@ -16,6 +16,7 @@ module.exports = async function auth(req, res, next) {
     req.user = user
     next()
   } catch (err) {
+    console.log(err)
     res.status(401).json({ message: "Unauthorized"})
   }
 }
