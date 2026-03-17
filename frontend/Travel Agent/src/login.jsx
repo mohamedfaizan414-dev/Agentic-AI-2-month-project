@@ -34,7 +34,9 @@ const Login = () => {
 
             const response = await axios.post('https://travel-agent-ltzc.onrender.com/api/auth/login', payload, {
                 withCredentials: true // This is REQUIRED to receive the cookie from res.cookie()
+                
             });
+            localStorage.setItem("token",response.data.token)
 
             if (response.status === 200) {
                 console.log('Login Success:', response.data.user);
