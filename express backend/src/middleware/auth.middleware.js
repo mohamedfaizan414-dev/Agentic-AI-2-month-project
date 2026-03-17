@@ -4,16 +4,12 @@ const userModel = require("../model/user.model")
 
 module.exports = async function auth(req, res, next) {
   try {
-   
+    // ✅ get token from header instead of cookies
     const authHeader = req.headers.authorization
-    try{
+
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ message: "Unauthorized" })
     }
-  }
-  catch(err){
-    console.log(err)
-  }
 
     const token = authHeader.split(" ")[1]
 
@@ -27,6 +23,6 @@ module.exports = async function auth(req, res, next) {
     next()
   } catch (err) {
     console.log(err)
-    res.status(401).json({ message: "Unauthorized"})
+    res.status(401).json({ message: err })
   }
 }
