@@ -17,6 +17,7 @@ const ChatPage = () => {
 
     const scrollRef = useRef(null);
     const navigate = useNavigate();
+    localStorage.setItem("token",response.data.token)
 
     // ✅ GET TOKEN
     const token = localStorage.getItem("token");
