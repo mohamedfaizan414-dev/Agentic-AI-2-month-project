@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import ChatMessage from './message.jsx';
 import './App.css';
 
-
 const ChatPage = () => {
 
     const [messages, setMessages] = useState([]);
@@ -14,44 +13,53 @@ const ChatPage = () => {
     const [activeId, setActiveId] = useState(null);
     const [user, setUser] = useState(null);
     const [showProfile, setShowProfile] = useState(false);
-
-    // ⭐ NEW STATE (sidebar toggle)
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
     const scrollRef = useRef(null);
     const navigate = useNavigate();
 
+    // ✅ GET TOKEN
+    const token = localStorage.getItem("token");
+
 
     // Initialize user and sessions
-// Initialize user and sessions
-useEffect(() => {
-    const init = async () => {
-        try {
-            
-            const userRes = await axios.get('https://travel-agent-ltzc.onrender.com/api/auth/me',{
-                withCredentials: true 
-            });
-            setUser(userRes.data);
-
-            
+    useEffect(() => {
+        const init = async () => {
             try {
-                const sessRes = await axios.get('https://travel-agent-ltzc.onrender.com/api/sessions',{
-                withCredentials: true 
-            });
-                setSessions(sessRes.data);
-            } catch (sessionErr) {
-                console.warn("Sessions failed to load, but user is authenticated.");
+
+                const userRes = await axios.get(
+                    'https://travel-agent-ltzc.onrender.com/api/auth/me',
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                setUser(userRes.data);
+
+                try {
+                    const sessRes = await axios.get(
+                        'https://travel-agent-ltzc.onrender.com/api/sessions',
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`
+                            }
+                        }
+                    );
+                    setSessions(sessRes.data);
+                } catch (sessionErr) {
+                    console.warn("Sessions failed to load, but user is authenticated.");
+                }
+
+            } catch (err) {
+                console.error("Auth failed:", err);
+                navigate('/login');
             }
+        };
 
-        } catch (err) {
-            
-            console.error("Auth failed:", err);
-            navigate('/login');
-        }
-    };
-
-    init();
-}, [navigate]);
+        init();
+    }, [navigate, token]);
 
 
     // Auto scroll
@@ -69,10 +77,13 @@ useEffect(() => {
         try {
 
             const res = await axios.get(
-                `https://travel-agent-ltzc.onrender.com/api/history/${sessionId}`
-            ,{
-                withCredentials: true 
-            });
+                `https://travel-agent-ltzc.onrender.com/api/history/${sessionId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
 
             setMessages(res.data);
 
@@ -105,7 +116,6 @@ useEffect(() => {
         setInput('');
         setLoading(true);
 
-
         try {
 
             const res = await axios.post(
@@ -113,26 +123,31 @@ useEffect(() => {
                 {
                     message: text,
                     conversationId: activeId
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
                 }
-            ,{
-                withCredentials: true 
-            });
+            );
 
             setMessages(prev => [
                 ...prev,
                 { message: res.data.reply, sender: 'bot' }
             ]);
 
-
             if (!activeId) {
 
                 setActiveId(res.data.conversationId);
 
                 const sessRes = await axios.get(
-                    'https://travel-agent-ltzc.onrender.com/api/sessions'
-                ,{
-                    withCredentials: true 
-                });
+                    'https://travel-agent-ltzc.onrender.com/api/sessions',
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
 
                 setSessions(sessRes.data);
 
@@ -155,9 +170,6 @@ useEffect(() => {
 
         <div className="app-layout">
 
-
-            {/* SIDEBAR */}
-
             <aside className={`sidebar ${sidebarOpen ? "open" : "closed"}`}>
 
                 <div className="sidebar-top">
@@ -173,7 +185,6 @@ useEffect(() => {
                     >
                         <span>+</span> New Chat
                     </button>
-
 
                     <div className="history-wrapper">
 
@@ -194,9 +205,6 @@ useEffect(() => {
                     </div>
 
                 </div>
-
-
-                {/* PROFILE */}
 
                 <div className="sidebar-bottom">
 
@@ -221,14 +229,16 @@ useEffect(() => {
 
                         </div>
 
-
                         {showProfile && (
 
                             <div className="profile-popover">
 
                                 <button
                                     id="btn-signout"
-                                    onClick={() => navigate('/login')}
+                                    onClick={() => {
+                                        localStorage.removeItem("token"); // ✅ logout fix
+                                        navigate('/login');
+                                    }}
                                 >
                                     Sign Out
                                 </button>
@@ -243,14 +253,7 @@ useEffect(() => {
 
             </aside>
 
-
-
-            {/* MAIN CONTENT */}
-
             <main className="content-container">
-
-
-                {/* TOP BAR */}
 
                 <div className="topbar">
 
@@ -264,10 +267,6 @@ useEffect(() => {
                     </button>
 
                 </div>
-
-
-
-                {/* CHAT AREA */}
 
                 <div className="chat-scroller">
 
@@ -290,7 +289,6 @@ useEffect(() => {
 
                         )}
 
-
                         {messages.map((m, i) => (
 
                             <div
@@ -306,8 +304,6 @@ useEffect(() => {
                             </div>
 
                         ))}
-
-
 
                         {loading && (
 
@@ -332,10 +328,6 @@ useEffect(() => {
                     </div>
 
                 </div>
-
-
-
-                {/* INPUT */}
 
                 <div className="input-section">
 
@@ -375,7 +367,6 @@ useEffect(() => {
                     </div>
 
                 </div>
-
 
             </main>
 

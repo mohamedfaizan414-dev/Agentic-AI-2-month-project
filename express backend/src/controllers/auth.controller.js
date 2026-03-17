@@ -3,7 +3,6 @@ const userModel = require("../model/user.model.js")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcryptjs")
 
-
 async function registerUser(req,res){
 
     const {username,email,password} = req.body
@@ -12,76 +11,73 @@ async function registerUser(req,res){
         $or:[
             { username },
             { email }
-
         ]
     })
    
     if (isUserExists){
         return res.status(409).json({message: "User already exists"})
     }
+
     const hash = await bcrypt.hash(password, 10)
+
     const user = await userModel.create({
         username,
         email,
         password: hash
     })
+
     const token = jwt.sign({
-        id : user._id},process.env.JWT_SECRET)
-        res.cookie("token",token,{
-            httpOnly: true,
-            secure: true,
-            sameSite: "None",
-            maxAge: 7 * 24 * 60 * 60 * 1000})
-        res.status(201).json({
-            message:"User registered succesfully",
-            user: user.username
-        })
-    
+        id : user._id
+    },process.env.JWT_SECRET)
+
+    // ✅ send token instead of cookie
+    res.status(201).json({
+        message:"User registered succesfully",
+        user: user.username,
+        token
+    })
 }
 
 async function loginUser(req,res){
     const {username,email,password} = req.body
+
     const user = await userModel.findOne({
         $or:[
             {username},
             {email}
         ]
     })
+
     if(!user){
         return res.status(401).json({message: "invalid credentials"})
     }
+
     const isPasswordValid = await bcrypt.compare(password, user.password)
+
     if (!isPasswordValid){
         return res.status(401).json({message: "invalid credentials"})
     }
 
     const token  = jwt.sign({
         id: user._id,
-
     },process.env.JWT_SECRET)
 
-    res.cookie("token",token,{
-        httpOnly: true,
-        secure: true,
-        sameSite: "None",
-        maxAge: 7 * 24 * 60 * 60 * 1000
-
-    })
+   
     res.status(200).json({
         message: "user logged in succesfully",
-        user: user.username
+        user: user.username,
+        token
     })
 }
 
-// This function assumes the 'auth' middleware has already run
+// getMe stays SAME
 async function getMe(req, res) {
     try {
-        // req.user is populated by the auth middleware
-        const user = await userModel.findById(req.user._id).select("-password");
-        if (!user) return res.status(404).json({ message: "User not found" });
-        res.status(200).json(user);
+        const user = await userModel.findById(req.user._id).select("-password")
+        if (!user) return res.status(404).json({ message: "User not found" })
+        res.status(200).json(user)
     } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: "Server error" })
     }
 }
 
