@@ -8,25 +8,25 @@ const LandingPage = () => {
     return (
         <div style={s.container}>
             {/* Navbar */}
-            <nav style={s.navbar}>
+            <nav id='nav-btn'>
                 <div style={s.logo}>TravelAgent<span>AI</span></div>
                 <div style={s.navLinks}>
-                    <button onClick={() => navigate('/login')} style={s.loginBtn}>Login</button>
-                    <button onClick={() => navigate('/register')} style={s.signupBtn}>Get Started</button>
+                    <button onClick={() => navigate('/login')}  id='lgn-btn-nav'>Login</button>
+                    <button onClick={() => navigate('/register')} id='reg-btn-nav'>Get Started</button>
                 </div>
             </nav>
 
             {/* Hero Section */}
             <header style={s.hero}>
                 <div style={s.heroContent}>
-                    <h1 style={s.title}>Travel Planning, <br /><span style={s.gradientText}>Reimagined by AI.</span></h1>
-                    <p style={s.subtitle}>
+                    <h1 id='nav-title-main'>Travel Planning, <br /><span style={s.gradientText}>Reimagined by AI.</span></h1>
+                    <p id='nav-title-p'>
                         Stop spending hours on spreadsheets. Get personalized itineraries, 
                         budget breakdowns, and hidden gems in seconds.
                     </p>
                     <div style={s.ctaGroup}>
-                        <button onClick={() => navigate('/register')} style={s.mainCta}>Start Your Journey</button>
-                        <button style={s.secondaryCta} onClick={() => navigate('/register')} >View Demo</button>
+                        <button onClick={() => navigate('/register')} id='nav-btn-jrn'>Start Your Journey</button>
+                        <button id='nav-btn-dmo' onClick={() => navigate('/register')} >View Demo</button>
                     </div>
                 </div>
                 
@@ -63,43 +63,12 @@ const s = {
         fontFamily: "'Inter', sans-serif",
         overflowX: 'hidden'
     },
-    navbar: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '20px 8%',
-        background: 'rgba(10, 10, 11, 0.8)',
-        backdropFilter: 'blur(10px)',
-        position: 'fixed',
-        width: '100%',
-        top: 0,
-        zIndex: 1000
-    },
     logo: {
         fontSize: '24px',
         fontWeight: 'bold',
         letterSpacing: '-1px'
     },
-    loginBtn: {
-        background: 'transparent',
-        backgroundColor: 'blue',
-        padding: '10px 20px',
-        borderRadius: '8px',
-        color: '#fff',
-        border: 'none',
-        marginRight: '20px',
-        cursor: 'pointer',
-        fontSize: '16px'
-    },
-    signupBtn: {
-        background: '#fff',
-        color: '#000',
-        padding: '10px 20px',
-        borderRadius: '8px',
-        border: 'none',
-        fontWeight: '600',
-        cursor: 'pointer'
-    },
+
     hero: {
         display: 'flex',
         alignItems: 'center',
@@ -112,47 +81,18 @@ const s = {
         flex: 1,
         maxWidth: '600px'
     },
-    title: {
-        fontSize: '64px',
-        lineHeight: '1.1',
-        marginBottom: '24px',
-        fontWeight: '800'
-    },
+ 
     gradientText: {
         background: 'linear-gradient(90deg, #10a37f, #3dcf8e)',
         WebkitBackgroundClip: 'text',
         WebkitTextFillColor: 'transparent',
     },
-    subtitle: {
-        fontSize: '20px',
-        color: '#a0a0a8',
-        lineHeight: '1.6',
-        marginBottom: '40px'
-    },
+   
     ctaGroup: {
         display: 'flex',
         gap: '20px'
     },
-    mainCta: {
-        backgroundColor: '#10a37f',
-        color: '#fff',
-        padding: '16px 32px',
-        borderRadius: '12px',
-        border: 'none',
-        fontSize: '18px',
-        fontWeight: 'bold',
-        cursor: 'pointer',
-        transition: 'transform 0.2s'
-    },
-    secondaryCta: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        color: '#fff',
-        padding: '16px 32px',
-        borderRadius: '12px',
-        border: '1px solid rgba(255,255,255,0.1)',
-        fontSize: '18px',
-        cursor: 'pointer'
-    },
+ 
     mockupContainer: {
         flex: 1,
         display: 'flex',
