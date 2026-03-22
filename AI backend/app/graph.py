@@ -179,12 +179,13 @@ def weather_tool(location: str) -> str:
     url = f"http://api.weatherstack.com/current?access_key={os.getenv('WEATHER_API_KEY')}&query={location}"
 
     data = requests.get(url)
-    loc_name = data['location']['name']
-    temp = data['current']['temperature']
-    desc = data['current']['weather_descriptions'][0]
-    feels = data['current']['feelslike']
-    humid = data['current']['humidity']
-    wind = data['current']['wind_speed']
+    response = data.json()
+    loc_name = response['location']['name']
+    temp = response['current']['temperature']
+    desc = response['current']['weather_descriptions'][0]
+    feels = response['current']['feelslike']
+    humid = response['current']['humidity']
+    wind = response['current']['wind_speed']
     result = f"Live weather for {loc_name}: {desc}, {temp}°C (feels like {feels}°C). Humidity is at {humid}% with wind speeds of {wind} km/h."
         
     return  result
