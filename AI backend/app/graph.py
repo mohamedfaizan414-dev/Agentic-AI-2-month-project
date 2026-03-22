@@ -169,10 +169,30 @@ def currency_exchanger(base_amount:float,base_currency:str , target_currency:str
     convertion_rate  = data["conversion_rate"]
     print("exchange tool used")
     return convertion_rate
+@tool
+def weather_tool(location: str) -> str:
+    """
+    Fetches the current live weather for a specific location using the Weatherstack API.
+    Input should be a city name (e.g., 'London' or 'New York').
+    """
+    api_key = os.getenv("WEATHERSTACK_API_KEY")
+    url = f'http://api.weatherstack.com/current?access_key={os.getenv('WEATHER_API_KEY')}&query={location}'
 
+    data = requests.get(url)
+    loc_name = data['location']['name']
+    temp = data['current']['temperature']
+    desc = data['current']['weather_descriptions'][0]
+    feels = data['current']['feelslike']
+    humid = data['current']['humidity']
+    wind = data['current']['wind_speed']
+
+        
+    return (f"Live weather for {loc_name}: {desc}, {temp}°C (feels like {feels}°C). "
+                f"Humidity is at {humid}% with wind speeds of {wind} km/h.")
+    
 #agent setup
 
-tools = [search_tool,currency_exchanger,check_train_availability]
+tools = [search_tool,currency_exchanger,check_train_availability,weather_tool]
 
 agent = create_agent(
     model=llm,
