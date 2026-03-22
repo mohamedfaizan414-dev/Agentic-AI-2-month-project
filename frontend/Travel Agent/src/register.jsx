@@ -31,6 +31,7 @@ const Register = () => {
     };
 
     return (
+        <div id='div-reg'>
         <div style={styles.wrapper}>
             <div style={styles.card}>
                 <h2 style={{ marginBottom: '10px', color: '#fcfcfc' }}>Create Account</h2>
@@ -70,6 +71,7 @@ const Register = () => {
                     Already have an account? <a href="/login" style={{ color: '#007bff' }}>Login here</a>
                 </p>
             </div>
+        </div>
         </div>
     );
 };

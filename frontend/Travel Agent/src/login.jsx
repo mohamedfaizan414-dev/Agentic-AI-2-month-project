@@ -48,6 +48,7 @@ const Login = () => {
     };
 
     return (
+        <div id='div-lgn'>
         <div style={styles.container}>
             <div style={styles.card}>
                 <h2 style={styles.title}>Login</h2>
@@ -79,6 +80,7 @@ const Login = () => {
                     New here? <a href="/register"  style={{ color: '#007bff' }}>Create an account</a>
                 </p>
             </div>
+        </div>
         </div>
     );
 };

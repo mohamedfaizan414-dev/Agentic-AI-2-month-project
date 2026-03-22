@@ -518,4 +518,12 @@ cursor:pointer;
    font-size: 14px;
    
 }
+#div-reg{
+  padding:0px 30px;
+  background-color: #000000;
+}
+#div-lgn{
+  padding:0px 30px;
+  background-color: #0A0A0A;
+}
 }
