@@ -185,10 +185,9 @@ def weather_tool(location: str) -> str:
     feels = data['current']['feelslike']
     humid = data['current']['humidity']
     wind = data['current']['wind_speed']
-
+    result = f"Live weather for {loc_name}: {desc}, {temp}°C (feels like {feels}°C). Humidity is at {humid}% with wind speeds of {wind} km/h."
         
-    return (f"Live weather for {loc_name}: {desc}, {temp}°C (feels like {feels}°C). "
-                f"Humidity is at {humid}% with wind speeds of {wind} km/h.")
+    return  result
     
 #agent setup
 
@@ -318,8 +317,7 @@ You are a premium, intelligent travel consultant. Your goal is to gather travel 
 
     final_msg = result["messages"][-1]
     content = final_msg.content
-    print(content)
-
+   
 
     # Normal response
     
