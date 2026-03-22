@@ -122,7 +122,7 @@ search = DuckDuckGoSearchRun()
 
 @tool
 def search_tool(query:str):
-    """- If the user asks about weather, prices, places, or anything uncertain use the search_tool."""
+    """- If the user asks about prices, places, or anything uncertain use the search_tool."""
 
     a= search.invoke(query)
 
