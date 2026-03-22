@@ -176,7 +176,7 @@ def weather_tool(location: str) -> str:
     Input should be a city name (e.g., 'London' or 'New York').
     """
     api_key = os.getenv("WEATHERSTACK_API_KEY")
-    url = f'http://api.weatherstack.com/current?access_key={os.getenv('WEATHER_API_KEY')}&query={location}'
+    url = f"http://api.weatherstack.com/current?access_key={os.getenv('WEATHER_API_KEY')}&query={location}"
 
     data = requests.get(url)
     loc_name = data['location']['name']
