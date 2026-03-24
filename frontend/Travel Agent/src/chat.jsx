@@ -13,7 +13,7 @@ const ChatPage = () => {
     const [activeId, setActiveId] = useState(null);
     const [user, setUser] = useState(null);
     const [showProfile, setShowProfile] = useState(false);
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const scrollRef = useRef(null);
     const navigate = useNavigate();
