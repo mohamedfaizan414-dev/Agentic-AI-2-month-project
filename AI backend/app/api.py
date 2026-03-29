@@ -3,7 +3,7 @@
 from fastapi import APIRouter
 from langchain_core.messages import HumanMessage
 from models import ChatRequest, ChatResponse
-from graph import workflow   # your compiled graph
+from graph import workflow  # your compiled graph
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
@@ -12,16 +12,12 @@ def chat(request: ChatRequest):
 
     state = {
         "messages": [HumanMessage(content=request.message)],
-        "conversation_id": request.conversation_id,
         "travel_data": {},
         "destination": None,
         "departure_date": None,
         "return_date": None,
         "budget": None,
         "travelers": None,
-        "validation_issue": None,
-        "stage": "active",
-        "itinerary": None,
     }
 
     result = workflow.invoke(

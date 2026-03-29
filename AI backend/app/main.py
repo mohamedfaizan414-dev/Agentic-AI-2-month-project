@@ -1,12 +1,12 @@
-# main.py
-
 from fastapi import FastAPI
 from api import router
 from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(
     title="Travel Agent AI",
     version="1.0.0"
 )
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
