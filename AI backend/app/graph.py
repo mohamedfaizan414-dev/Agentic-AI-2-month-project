@@ -7,6 +7,7 @@ from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.tools import tool
 from langchain_groq import ChatGroq
 from langchain.agents import create_agent
+from serpapi import GoogleSearch
 from langsmith import Client
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage,SystemMessage
 from typing import TypedDict, List, Optional, Annotated
@@ -189,12 +190,54 @@ def weather_tool(location: str) -> str:
     result = f"Live weather for {loc_name}: {desc}, {temp}°C (feels like {feels}°C). Humidity is at {humid}% with wind speeds of {wind} km/h."
         
     return  result
-# @tool
-# def rag_chat():
+@tool
+def search_hotels_serp(destination: str, check_in: str, check_out: str) -> str:
+    """
+    Search for real-time hotel prices and availability using Google Hotels.
+    Inputs:
+    - destination: The city or area name (e.g., 'Paris' or 'Thrissur').
+    - check_in: The arrival date in YYYY-MM-DD format.
+    - check_out: The departure date in YYYY-MM-DD format.
+    """
+    params = {
+        "engine": "google_hotels",
+        "q": destination,
+        "check_in_date": check_in,
+        "check_out_date": check_out,
+        "currency": "INR", # You can change this or make it dynamic
+        "gl": "in",        # Country code for India
+        "hl": "en",        # Language
+        "api_key": os.getenv('SERP_API_KEY') 
+    }
+
+    try:
+        search = GoogleSearch(params)
+        results = search.get_dict()
+        
+        # We only want to send relevant data back to the LLM to save tokens
+        hotels = results.get("properties", [])
+        if not hotels:
+            return f"No hotels found in {destination} for those dates."
+
+        hotel_summaries = []
+        for hotel in hotels[:5]: # Top 5 results
+            name = hotel.get("name")
+            price = hotel.get("rate_per_night", {}).get("lowest", "Price not available")
+            rating = hotel.get("overall_rating", "No rating")
+            link = hotel.get("link", "No link provided")
+            
+            summary = f"Hotel: {name} | Price: {price} | Rating: {rating}/5 | Link: {link}"
+            hotel_summaries.append(summary)
+
+        print("Hotel search tool used")
+        return "\n".join(hotel_summaries)
+
+    except Exception as e:
+        return f"Error searching for hotels: {str(e)}"
 
 #agent setup
 
-tools = [search_tool,currency_exchanger,check_train_availability,weather_tool]
+tools = [search_tool,currency_exchanger,check_train_availability,weather_tool,search_hotels_serp]
 
 agent = create_agent(
     model=llm,
