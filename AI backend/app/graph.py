@@ -1,45 +1,46 @@
 import os
+import re
+import json
+import requests
+from typing import TypedDict, List, Optional, Annotated
+from datetime import datetime
+
+import dateparser
+import serpapi
+from dotenv import load_dotenv
+
+from langchain_groq import ChatGroq
+from langchain_community.tools import DuckDuckGoSearchRun
+from langchain_core.tools import tool
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.checkpoint.memory import MemorySaver
-from langchain_community.tools import DuckDuckGoSearchRun
-from langchain_core.tools import tool
-from langchain_groq import ChatGroq
-from langchain.agents import create_agent
-import serpapi  
-from langsmith import Client
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage,SystemMessage
-from typing import TypedDict, List, Optional, Annotated
-from dotenv import load_dotenv
-from datetime import datetime
-import dateparser
-import json
-import re
-import requests
-
-
+from langgraph.prebuilt import create_react_agent   # ✅ FIX 1: correct import
 
 load_dotenv()
 
+# ─────────────────────────────────────────────
 # LLM SETUP
+# ─────────────────────────────────────────────
 
 llm = ChatGroq(
-    model="openai/gpt-oss-120b",
+    model="llama-3.3-70b-versatile",   # ✅ FIX 2: valid Groq model
     temperature=0,
-    model_kwargs={"tool_choice": "auto"}
 )
 
-client = Client()
-prompt = client.pull_prompt("hwchase17/react") 
-prompt_template_string = prompt.template
+# ✅ FIX 3: removed broken client.pull_prompt — define system prompt directly
+AGENT_SYSTEM_PROMPT = """You are a premium, intelligent travel consultant AI.
+Your job is to help users plan trips by gathering details, answering questions,
+and calling tools when you need real-time data (prices, weather, hotels, trains).
+Always be helpful, friendly, and precise."""
 
-
-
+# ─────────────────────────────────────────────
 # STATE
+# ─────────────────────────────────────────────
 
 class TravelState(TypedDict):
-    
     messages: Annotated[list[BaseMessage], add_messages]
     conversation_id: int
     travel_data: dict
@@ -53,387 +54,344 @@ class TravelState(TypedDict):
     stage: Optional[str]
     itinerary: Optional[str]
 
-# SAFE JSON EXTRACTOR
+# ─────────────────────────────────────────────
+# HELPERS
+# ─────────────────────────────────────────────
 
-def safe_json_extract(text):
+def safe_json_extract(text: str) -> dict:
     try:
         match = re.search(r"\{[\s\S]*?\}", text)
         if match:
             return json.loads(match.group())
-    except:
+    except Exception:
         pass
     return {}
 
-# DATE RESOLUTION (DETERMINISTIC)
 
-def resolve_date(date_str):
+def resolve_date(date_str: Optional[str]):
     if not date_str:
         return None, "MISSING_DATE"
-
-    parsed = dateparser.parse(
-        date_str,
-        settings={"PREFER_DATES_FROM": "future"}
-    )
-
+    parsed = dateparser.parse(date_str, settings={"PREFER_DATES_FROM": "future"})
     if not parsed:
         return None, "INVALID_FORMAT"
-
     return parsed.date(), None
 
-# NODE 1 — EXTRACT STRUCTURED INFO
+# ─────────────────────────────────────────────
+# TOOLS
+# ─────────────────────────────────────────────
 
-def extract(state: TravelState):
-
-    today = datetime.today().date()
-
-    prompt = f"""
-    Today's date is: {today}
-
-    Extract travel details from the conversation.
-
-    Return ONLY valid JSON:
-    {{
-      "current_location": string or null,
-      "destination": string or null,
-      "departure_date": string or null,
-      "return_date": string or null,
-      "budget": number or null,
-      "travelers": number or null
-    }}
-
-    Conversation:
-    {state["messages"]}
-    """
-
-    response = llm.invoke(prompt)
-    data = safe_json_extract(response.content)
-
-    return {
-        "current_location" : data.get("current_location") or state.get("current_location"),
-        "destination": data.get("destination") or state.get("destination"),
-        "departure_date": data.get("departure_date") or state.get("departure_date"),
-        "return_date": data.get("return_date") or state.get("return_date"),
-        "budget": data.get("budget") or state.get("budget"),
-        "travelers": data.get("travelers") or state.get("travelers"),
-    }
-
-#tools
-
-search = DuckDuckGoSearchRun()
+_search = DuckDuckGoSearchRun()
 
 @tool
-def search_tool(query:str):
-    """- If the user asks about prices, places, or anything uncertain use the search_tool."""
+def search_tool(query: str) -> str:
+    """Search the web for prices, places, events, or anything uncertain."""
+    result = _search.invoke(query)
+    print("[tool] search_tool used")
+    return result
 
-    a= search.invoke(query)
-
-    print("tool is used")
-    return a
-
-    
 
 @tool
 def check_train_availability(source: str, destination: str, date: str) -> str:
     """
     Check train availability between two stations on a specific date.
-    Input should be station codes (e.g., 'NDLS' for Delhi) and date in DD-MM-YYYY format.
+    Use station codes (e.g., 'NDLS' for Delhi) and date in DD-MM-YYYY format.
     """
     url = os.getenv("RapidAPI_url")
-    
-    # These match your curl --header flags
     headers = {
         "x-rapidapi-host": os.getenv("RapidAPI_host"),
-        "x-rapidapi-key": os.getenv("RapidAPI_key")
+        "x-rapidapi-key":  os.getenv("RapidAPI_key"),
     }
-    
-    # These match your curl --url query parameters
-    params = {
-        "source": source,
-        "destination": destination,
-        "date": date
-    }
-    print("train")
+    params = {"source": source, "destination": destination, "date": date}
+    print("[tool] check_train_availability used")
     try:
         response = requests.get(url, headers=headers, params=params)
-        response.raise_for_status() # Check for errors
-        return str(response.json()) # LangChain tools must return a string
+        response.raise_for_status()
+        return str(response.json())
     except Exception as e:
         return f"Error fetching train data: {str(e)}"
-    
+
 
 @tool
-def currency_exchanger(base_amount:float,base_currency:str , target_currency:str) -> float:
-    """ This function converts any currency from the base currency to target currency  """
-    url = f"https://v6.exchangerate-api.com/v6/{os.getenv('EXCHANGE_RATE_API_KEY')}/pair/{base_currency}/{target_currency}"
-    response = requests.get(url)
-    data = response.json()
-    convertion_rate  = data["conversion_rate"]
-    print("exchange tool used")
-    return convertion_rate
+def currency_exchanger(base_amount: float, base_currency: str, target_currency: str) -> str:
+    """Convert an amount from one currency to another using live exchange rates."""
+    url = (
+        f"https://v6.exchangerate-api.com/v6/{os.getenv('EXCHANGE_RATE_API_KEY')}"
+        f"/pair/{base_currency}/{target_currency}"
+    )
+    print("[tool] currency_exchanger used")
+    try:
+        data = requests.get(url).json()
+        rate = data["conversion_rate"]
+        converted = base_amount * rate
+        return f"{base_amount} {base_currency} = {converted:.2f} {target_currency} (rate: {rate})"
+    except Exception as e:
+        return f"Currency conversion error: {str(e)}"
+
+
 @tool
 def weather_tool(location: str) -> str:
     """
-    Fetches the current live weather for a specific location using the Weatherstack API.
-    Input should be a city name (e.g., 'London' or 'New York').
+    Fetch current live weather for a city (e.g., 'London' or 'New York').
     """
-    api_key = os.getenv("WEATHERSTACK_API_KEY")
-    url = f"http://api.weatherstack.com/current?access_key={os.getenv('WEATHER_API_KEY')}&query={location}"
+    url = (
+        f"http://api.weatherstack.com/current"
+        f"?access_key={os.getenv('WEATHER_API_KEY')}&query={location}"
+    )
+    print("[tool] weather_tool used")
+    try:
+        response = requests.get(url).json()
+        loc_name = response["location"]["name"]
+        temp     = response["current"]["temperature"]
+        desc     = response["current"]["weather_descriptions"][0]
+        feels    = response["current"]["feelslike"]
+        humid    = response["current"]["humidity"]
+        wind     = response["current"]["wind_speed"]
+        return (
+            f"Live weather for {loc_name}: {desc}, {temp}°C "
+            f"(feels like {feels}°C). Humidity: {humid}%, Wind: {wind} km/h."
+        )
+    except Exception as e:
+        return f"Weather fetch error: {str(e)}"
 
-    data = requests.get(url)
-    response = data.json()
-    loc_name = response['location']['name']
-    temp = response['current']['temperature']
-    desc = response['current']['weather_descriptions'][0]
-    feels = response['current']['feelslike']
-    humid = response['current']['humidity']
-    wind = response['current']['wind_speed']
-    result = f"Live weather for {loc_name}: {desc}, {temp}°C (feels like {feels}°C). Humidity is at {humid}% with wind speeds of {wind} km/h."
-        
-    return  result
 
 @tool
 def search_hotels_serp(destination: str, check_in: str, check_out: str) -> str:
     """
-    Search for real-time hotel data and details. 
-    - destination: City name (e.g., 'Thrissur')
-    - check_in: Date in EXACT 'YYYY-MM-DD' format.
-    - check_out: Date in EXACT 'YYYY-MM-DD' format.
+    Search for real-time hotel data.
+    - destination: city name (e.g., 'Thrissur')
+    - check_in / check_out: YYYY-MM-DD format
     """
-    # Use os.getenv so you don't leak your key in the code!
-    api_key = os.getenv("SERPAPI_KEY")
-
-    client = serpapi.Client(api_key=api_key)
-    params = {
-        "engine": "google_hotels",
-        "q": destination,
-        "check_in_date": check_in,
-        "check_out_date": check_out,
-        "currency": "INR",
-        "gl": "in"
-    }
-
+    print("[tool] search_hotels_serp used")
     try:
-        results = client.search(params)
-        # SerpApi sometimes returns 'properties' or 'hotels'. Defensive checking:
+        client = serpapi.Client(api_key=os.getenv("SERPAPI_KEY"))
+        results = client.search({
+            "engine": "google_hotels",
+            "q": destination,
+            "check_in_date": check_in,
+            "check_out_date": check_out,
+            "currency": "INR",
+            "gl": "in",
+        })
         hotels = results.get("properties", [])
-        
         if not hotels:
             return f"No hotels found for {destination} from {check_in} to {check_out}."
-
-        hotel_data = []
+        lines = []
         for h in hotels[:4]:
-            name = h.get("name", "Unknown Hotel")
+            name  = h.get("name", "Unknown Hotel")
             price = h.get("rate_per_night", {}).get("lowest", "N/A")
-            hotel_data.append(f'🏨 {name}: {price}')
-            
-        return "\n".join(hotel_data)
+            lines.append(f"🏨 {name}: {price}")
+        return "\n".join(lines)
     except Exception as e:
-        return f"Tool Error: {str(e)}"
+        return f"Hotel search error: {str(e)}"
 
-#agent setup
+# ─────────────────────────────────────────────
+# AGENT
+# ─────────────────────────────────────────────
 
-tools = [search_tool,currency_exchanger,check_train_availability,weather_tool,search_hotels_serp]
+tools = [search_tool, currency_exchanger, check_train_availability, weather_tool, search_hotels_serp]
 
-agent = create_agent(
+# ✅ FIX 4: use create_react_agent correctly with prompt kwarg
+agent = create_react_agent(
     model=llm,
-    tools= tools,
-    system_prompt=prompt_template_string
+    tools=tools,
+    prompt=AGENT_SYSTEM_PROMPT,
 )
 
+# ─────────────────────────────────────────────
+# NODE 1 — EXTRACT
+# ─────────────────────────────────────────────
 
+def extract(state: TravelState) -> dict:
+    today = datetime.today().date()
+    prompt_text = f"""
+Today's date is: {today}
 
-# NODE 2 — DETERMINISTIC VALIDATION
+Extract travel details from the conversation below.
+Return ONLY valid JSON — no extra text:
+{{
+  "current_location": string or null,
+  "destination": string or null,
+  "departure_date": string or null,
+  "return_date": string or null,
+  "budget": number or null,
+  "travelers": number or null
+}}
 
-def validate_logic(state: TravelState):
+Conversation:
+{state["messages"]}
+"""
+    response = llm.invoke(prompt_text)
+    data = safe_json_extract(response.content)
 
-    dep_raw = state.get("departure_date")
-    ret_raw = state.get("return_date")
-    budget = state.get("budget")
+    return {
+        "current_location": data.get("current_location") or state.get("current_location"),
+        "destination":      data.get("destination")      or state.get("destination"),
+        "departure_date":   data.get("departure_date")   or state.get("departure_date"),
+        "return_date":      data.get("return_date")      or state.get("return_date"),
+        "budget":           data.get("budget")           or state.get("budget"),
+        "travelers":        data.get("travelers")        or state.get("travelers"),
+    }
+
+# ─────────────────────────────────────────────
+# NODE 2 — VALIDATE
+# ─────────────────────────────────────────────
+
+def validate_logic(state: TravelState) -> dict:
+    dep_raw  = state.get("departure_date")
+    ret_raw  = state.get("return_date")
+    budget   = state.get("budget")
     travelers = state.get("travelers")
 
-    # DATE VALIDATION
     if dep_raw or ret_raw:
-
         dep_date, dep_error = resolve_date(dep_raw)
         ret_date, ret_error = resolve_date(ret_raw)
 
         if dep_error:
-            return {
-                "validation_issue": {
-                    "type": "DATE_ERROR",
-                    "field": "departure_date",
-                    "reason": dep_error
-                }
-            }
-
+            return {"validation_issue": {"type": "DATE_ERROR", "field": "departure_date", "reason": dep_error}}
         if ret_error:
-            return {
-                "validation_issue": {
-                    "type": "DATE_ERROR",
-                    "field": "return_date",
-                    "reason": ret_error
-                }
-            }
-
+            return {"validation_issue": {"type": "DATE_ERROR", "field": "return_date", "reason": ret_error}}
         if ret_date <= dep_date:
-            return {
-                "validation_issue": {
-                    "type": "DATE_LOGIC_ERROR",
-                    "reason": "RETURN_BEFORE_DEPARTURE",
-                    "departure": dep_date.isoformat(),
-                    "return": ret_date.isoformat()
-                }
-            }
+            return {"validation_issue": {
+                "type": "DATE_LOGIC_ERROR",
+                "reason": "RETURN_BEFORE_DEPARTURE",
+                "departure": dep_date.isoformat(),
+                "return": ret_date.isoformat(),
+            }}
 
-        state["departure_date"] = dep_date.isoformat()
-        state["return_date"] = ret_date.isoformat()
+        # Dates are valid — store ISO strings back
+        return {
+            "validation_issue": None,
+            "departure_date": dep_date.isoformat(),
+            "return_date":    ret_date.isoformat(),
+        }
 
-    # BUDGET VALIDATION
     if budget is not None:
-
         if budget < 100:
-            return {
-                "validation_issue": {
-                    "type": "BUDGET_TOO_LOW",
-                    "budget": budget
-                }
-            }
-
+            return {"validation_issue": {"type": "BUDGET_TOO_LOW", "budget": budget}}
         if travelers and (budget / travelers) < 200:
-            return {
-                "validation_issue": {
-                    "type": "BUDGET_PER_PERSON_TOO_LOW",
-                    "budget": budget,
-                    "travelers": travelers
-                }
-            }
+            return {"validation_issue": {
+                "type": "BUDGET_PER_PERSON_TOO_LOW",
+                "budget": budget,
+                "travelers": travelers,
+            }}
 
-    return {
-        "validation_issue": None,
-        "departure_date": state.get("departure_date"),
-        "return_date": state.get("return_date")
-    }
+    return {"validation_issue": None}
 
-
-
+# ─────────────────────────────────────────────
 # NODE 3 — THINKING BRAIN
+# ─────────────────────────────────────────────
 
-def thinking_brain(state: TravelState):
-
-    last_user_message = state["messages"][-1].content
+def thinking_brain(state: TravelState) -> dict:
     validation_issue = state.get("validation_issue")
-     # FULL conversation:
-    # {state["messages"]}
-    prompt = f"""
-    ### ROLE
-You are a premium, intelligent travel consultant. Your goal is to gather travel details, resolve validation errors, and provide expert recommendations.
+
+    system_prompt = f"""
+### ROLE
+You are a premium, intelligent travel consultant. Your goal is to gather travel details,
+resolve validation errors, and provide expert recommendations.
 
 ### CURRENT TRAVEL CONTEXT
-- Current Location: {state.get("current_location")}
-- Destination: {state.get("destination")}
-- Departure Date: {state.get("departure_date")}
-- Return Date: {state.get("return_date")}
-- Total Budget: {state.get("budget")}
-- Number of Travelers: {state.get("travelers")}
+- Current Location : {state.get("current_location")}
+- Destination      : {state.get("destination")}
+- Departure Date   : {state.get("departure_date")}
+- Return Date      : {state.get("return_date")}
+- Total Budget     : {state.get("budget")}
+- Travelers        : {state.get("travelers")}
 
 ### ACTIVE VALIDATION ISSUES
-- Issue: {validation_issue if validation_issue else "None"}
+{validation_issue if validation_issue else "None"}
 
-### OPERATIONAL INSTRUCTIONS
-1. ADDRESS ERRORS: If a "Validation Issue" is present, prioritize explaining it naturally to the user and ask for the specific corrected information.
-2. TOOL USAGE: Use the 'search_tool' or 'currency_exchanger' if the user asks for real-time data like weather, exchange rates, or local events.
-3. CONVERSATIONAL FLOW: Respond naturally. If information is missing (e.g., no destination or budget), ask for it politely.
-4. PLANNING: If all necessary information is known, propose a brief, high-level travel plan to the user.
+### INSTRUCTIONS
+1. ADDRESS ERRORS first if a validation issue is present.
+2. Use tools (search_tool, weather_tool, etc.) for real-time data.
+3. If info is missing, ask for it naturally.
+4. If all details are known, propose a high-level travel plan.
+5. If the user explicitly asks for the final itinerary OR agrees to the proposed plan,
+   respond ONLY with the single word: FINALIZE
+"""
 
-### OUTPUT TRIGGERS
-- If the user explicitly asks for the final itinerary OR agrees to the proposed plan: Respond ONLY with the word "FINALIZE".
-- Otherwise: Respond with your natural consultant persona.
-    """
-
-
-    # tools required
+    # ✅ FIX 5: pass proper message list; agent returns {"messages": [...]}
     result = agent.invoke({
-        "messages": [SystemMessage(content=prompt)] + state["messages"][-5:]
+        "messages": [SystemMessage(content=system_prompt)] + list(state["messages"][-6:])
     })
 
     final_msg = result["messages"][-1]
-    content = final_msg.content
-   
-
-    # Normal response
-    
+    content   = final_msg.content if hasattr(final_msg, "content") else str(final_msg)
 
     if "FINALIZE" in content.upper():
-        
         return {
-            "messages": [AIMessage(content="Great! Preparing your itinerary… ✈️")],
-            "stage": "finalize"
+            "messages": [AIMessage(content="Great! Preparing your personalised itinerary… ✈️")],
+            "stage": "finalize",
         }
-    
 
+    # ✅ FIX 6: always wrap in AIMessage so add_messages reducer is happy
     return {
-        "messages": [content],
-        "stage": "active"
-    }
-    
-
-
-# NODE 4 — FINAL ITINERARY
-
-def generate_itinerary(state: TravelState):
-
-    prompt = f"""
-    Create a premium, detailed travel itinerary.
-
-    Use these exact ISO dates:
-    Departure: {state['departure_date']}
-    Return: {state['return_date']}
-
-    current_location: {state['current_location']}
-    Destination: {state['destination']}
-    Budget: {state['budget']}
-    Travelers: {state['travelers']}
-
-    Do NOT reinterpret dates.
-    Make it high quality, practical, and personalized.
-    """
-    
-    print("itinerary")
-    response = agent.invoke(prompt)
-
-
-    return {
-        "itinerary": [response.content],
-        "messages":  [response]
+        "messages": [AIMessage(content=content)],
+        "stage": "active",
     }
 
+# ─────────────────────────────────────────────
+# NODE 4 — GENERATE ITINERARY
+# ─────────────────────────────────────────────
+
+def generate_itinerary(state: TravelState) -> dict:
+    prompt_text = f"""
+Create a premium, detailed day-by-day travel itinerary.
+
+Use these EXACT ISO dates — do NOT reinterpret them:
+  Departure : {state.get("departure_date")}
+  Return    : {state.get("return_date")}
+
+From            : {state.get("current_location")}
+To              : {state.get("destination")}
+Total Budget    : {state.get("budget")}
+Number of People: {state.get("travelers")}
+
+Make it high-quality, practical, and personalised. Include transport, accommodation
+suggestions, daily activities, food recommendations, and budget breakdown.
+"""
+    print("[node] generate_itinerary")
+
+    # ✅ FIX 7: agent.invoke expects dict with "messages" key
+    result = agent.invoke({
+        "messages": [HumanMessage(content=prompt_text)]
+    })
+
+    final_msg = result["messages"][-1]
+    content   = final_msg.content if hasattr(final_msg, "content") else str(final_msg)
+
+    return {
+        "itinerary": content,
+        "messages":  [AIMessage(content=content)],
+    }
+
+# ─────────────────────────────────────────────
 # ROUTER
+# ─────────────────────────────────────────────
 
-def router(state: TravelState):
+def router(state: TravelState) -> str:
     if state.get("stage") == "finalize":
         return "final"
     return END
 
+# ─────────────────────────────────────────────
 # BUILD GRAPH
+# ─────────────────────────────────────────────
 
 graph = StateGraph(TravelState)
 
-graph.add_node("extract", extract)
+graph.add_node("extract",  extract)
 graph.add_node("validate", validate_logic)
-graph.add_node("brain", thinking_brain)
-graph.add_node("final", generate_itinerary)
+graph.add_node("brain",    thinking_brain)
+graph.add_node("final",    generate_itinerary)
 
-graph.add_edge(START, "extract")
-graph.add_edge("extract", "validate")
+graph.add_edge(START,      "extract")
+graph.add_edge("extract",  "validate")
 graph.add_edge("validate", "brain")
 
 graph.add_conditional_edges(
     "brain",
     router,
-    {
-        "final": "final",
-        END: END
-    }
+    {"final": "final", END: END},
 )
 
 graph.add_edge("final", END)
