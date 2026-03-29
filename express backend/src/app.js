@@ -1,6 +1,5 @@
 const express3   = require("express");
 const cors       = require("cors");
-const helmet     = require("helmet");
 const cookieparser = require("cookie-parser");
 const authRoutes   = require("./routes/auth.routes");
 const chatRoutes   = require("./routes/chat.routes");
@@ -8,7 +7,7 @@ const chatRoutes   = require("./routes/chat.routes");
 const app = express3();
 
 // Security headers
-app.use(helmet());
+
 
 app.use(cors({
   origin: [
