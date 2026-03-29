@@ -41,7 +41,7 @@ exports.sendMessage = async (req, res) => {
     // Return the activeId so the frontend knows which session it is in
     res.status(200).json({ reply: botReply, conversationId: activeId });
   } catch (error) {
-    res.status(500).json({ error: "Chat failed" });
+    res.status(500).json({ error: error});
   }
 };
 
