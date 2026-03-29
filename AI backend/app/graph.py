@@ -7,7 +7,7 @@ from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.tools import tool
 from langchain_groq import ChatGroq
 from langchain.agents import create_agent
-from serpapi import GoogleSearch
+import serpapi  
 from langsmith import Client
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage,SystemMessage
 from typing import TypedDict, List, Optional, Annotated
@@ -190,50 +190,45 @@ def weather_tool(location: str) -> str:
     result = f"Live weather for {loc_name}: {desc}, {temp}°C (feels like {feels}°C). Humidity is at {humid}% with wind speeds of {wind} km/h."
         
     return  result
+
 @tool
 def search_hotels_serp(destination: str, check_in: str, check_out: str) -> str:
     """
-    Search for real-time hotel prices and availability using Google Hotels.
-    Inputs:
-    - destination: The city or area name (e.g., 'Paris' or 'Thrissur').
-    - check_in: The arrival date in YYYY-MM-DD format.
-    - check_out: The departure date in YYYY-MM-DD format.
+    Search for real-time hotel data and details. 
+    - destination: City name (e.g., 'Thrissur')
+    - check_in: Date in EXACT 'YYYY-MM-DD' format.
+    - check_out: Date in EXACT 'YYYY-MM-DD' format.
     """
+    # Use os.getenv so you don't leak your key in the code!
+    api_key = os.getenv("SERPAPI_KEY")
+
+    client = serpapi.Client(api_key=api_key)
     params = {
         "engine": "google_hotels",
         "q": destination,
         "check_in_date": check_in,
         "check_out_date": check_out,
-        "currency": "INR", # You can change this or make it dynamic
-        "gl": "in",        # Country code for India
-        "hl": "en",        # Language
-        "api_key": os.getenv('SERP_API_KEY') 
+        "currency": "INR",
+        "gl": "in"
     }
 
     try:
-        search = GoogleSearch(params)
-        results = search.get_dict()
-        
-        # We only want to send relevant data back to the LLM to save tokens
+        results = client.search(params)
+        # SerpApi sometimes returns 'properties' or 'hotels'. Defensive checking:
         hotels = results.get("properties", [])
+        
         if not hotels:
-            return f"No hotels found in {destination} for those dates."
+            return f"No hotels found for {destination} from {check_in} to {check_out}."
 
-        hotel_summaries = []
-        for hotel in hotels[:5]: # Top 5 results
-            name = hotel.get("name")
-            price = hotel.get("rate_per_night", {}).get("lowest", "Price not available")
-            rating = hotel.get("overall_rating", "No rating")
-            link = hotel.get("link", "No link provided")
+        hotel_data = []
+        for h in hotels[:4]:
+            name = h.get("name", "Unknown Hotel")
+            price = h.get("rate_per_night", {}).get("lowest", "N/A")
+            hotel_data.append(f'🏨 {name}: {price}')
             
-            summary = f"Hotel: {name} | Price: {price} | Rating: {rating}/5 | Link: {link}"
-            hotel_summaries.append(summary)
-
-        print("Hotel search tool used")
-        return "\n".join(hotel_summaries)
-
+        return "\n".join(hotel_data)
     except Exception as e:
-        return f"Error searching for hotels: {str(e)}"
+        return f"Tool Error: {str(e)}"
 
 #agent setup
 
