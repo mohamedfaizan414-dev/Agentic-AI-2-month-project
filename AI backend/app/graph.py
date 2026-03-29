@@ -165,7 +165,7 @@ def search_hotels_serp(destination: str, check_in: str, check_out: str) -> str:
     """
     print("[tool] search_hotels_serp used")
     try:
-        client = serpapi.Client(api_key=os.getenv("SERPAPI_KEY"))
+        client = serpapi.Client(api_key=os.getenv("SERP_API_KEY"))
         results = client.search({
             "engine": "google_hotels",
             "q": destination,
