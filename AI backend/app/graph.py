@@ -189,9 +189,9 @@ def weather_tool(location: str) -> str:
     result = f"Live weather for {loc_name}: {desc}, {temp}°C (feels like {feels}°C). Humidity is at {humid}% with wind speeds of {wind} km/h."
         
     return  result
-@tool
-def rag_chat():
-    
+# @tool
+# def rag_chat():
+
 #agent setup
 
 tools = [search_tool,currency_exchanger,check_train_availability,weather_tool]
