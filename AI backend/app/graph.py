@@ -86,19 +86,27 @@ def search_tool(query: str) -> str:
 def check_train_availability(source: str, destination: str, date: str) -> str:
     """
     Check train availability between two stations on a specific date.
-    Use station codes (e.g., 'NDLS' for Delhi) and date in DD-MM-YYYY format.
+    Input should be station codes (e.g., 'NDLS' for Delhi) and date in DD-MM-YYYY format.
     """
     url = os.getenv("RapidAPI_url")
+    
+    # These match your curl --header flags
     headers = {
         "x-rapidapi-host": os.getenv("RapidAPI_host"),
-        "x-rapidapi-key":  os.getenv("RapidAPI_key"),
+        "x-rapidapi-key": os.getenv("RapidAPI_key")
     }
-    params = {"source": source, "destination": destination, "date": date}
-    print("[tool] check_train_availability used")
+    
+    # These match your curl --url query parameters
+    params = {
+        "source": source,
+        "destination": destination,
+        "date": date
+    }
+    print("train")
     try:
         response = requests.get(url, headers=headers, params=params)
-        response.raise_for_status()
-        return str(response.json())
+        response.raise_for_status() # Check for errors
+        return str(response.json()) # LangChain tools must return a string
     except Exception as e:
         return f"Error fetching train data: {str(e)}"
 
