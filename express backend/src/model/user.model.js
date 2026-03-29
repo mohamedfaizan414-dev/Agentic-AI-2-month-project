@@ -1,20 +1,24 @@
-const mongoose3 = require("mongoose");
+const mongoose = require("mongoose")
 
-const userSchema = new mongoose3.Schema(
-  {
-    username: { type: String, required: true, unique: true, trim: true, minlength: 3, maxlength: 30 },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: true, minlength: 8 },
-    preferences: {
-      currency: { type: String, default: "INR" },
-      travelStyle: { type: String, enum: ["budget", "mid-range", "luxury"], default: "mid-range" },
-      dietaryRestrictions: [String],
-      homeCity: String,
+
+const schema = new mongoose.Schema({
+    username:{
+        type: String,
+        required: true,
+        unique: true
     },
-    lastSeen: Date,
-    isVerified: { type: Boolean, default: false },
-  },
-  { timestamps: true }
-);
 
-module.exports = mongoose3.model("user", userSchema);
+    email:{
+        type: String,
+        required: true,
+        unique: true
+    },
+    password:{
+        type:String,
+        required: true
+    }
+})
+
+const userModel = mongoose.model("user",schema)
+
+module.exports = userModel
