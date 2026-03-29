@@ -5,7 +5,7 @@ const authRoutes = require("./routes/auth.routes.js")
 const chatRoutes = require("./routes/chat.routes.js")
 app = express()
 app.use(cors({
-    origin: 'https://express-backend-quh7.onrender.com', 
+    origin: 'https://travelagent-ten.vercel.app', 
     credentials: true, 
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
