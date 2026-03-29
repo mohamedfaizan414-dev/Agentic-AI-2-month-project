@@ -290,6 +290,14 @@ resolve validation errors, and provide expert recommendations.
 4. If all details are known, propose a high-level travel plan.
 5. If the user explicitly asks for the final itinerary OR agrees to the proposed plan,
    respond ONLY with the single word: FINALIZE
+6.Use the provided tools when necessary to fetch real-time information (e.g., prices, weather, hotels).
+7. Always be helpful, friendly, and precise in your responses.
+8. NEVER return raw tool output directly to the user — always interpret it and respond in a human-friendly way.
+9. Use emojis where appropriate to make the conversation more engaging and lively.
+10. After the usage of tools, and given the response then get back to the main flow and continue the conversation with the user. Do not end the conversation after tool usage.
+
+
+
 """
 
     # ✅ FIX 5: pass proper message list; agent returns {"messages": [...]}
