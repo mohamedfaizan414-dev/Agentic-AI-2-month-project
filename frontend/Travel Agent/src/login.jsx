@@ -6,7 +6,8 @@ import { useNavigate } from 'react-router-dom';
 
 
 const Login = () => {
-
+     const AgentUrl = 'https://agent-backend-3s9n.onrender.com'
+    const BackendUrl = 'https://express-backend-quh7.onrender.com'
     // We use "identifier" to represent either the username or the email
     const [formData, setFormData] = useState({
         identifier: '', 
@@ -32,7 +33,7 @@ const Login = () => {
                 password: formData.password
             };
 
-            const response = await axios.post('https://travel-agent-ltzc.onrender.com/api/auth/login', payload, {
+            const response = await axios.post(`${BackendUrl}/api/auth/login`, payload, {
                 withCredentials: true // This is REQUIRED to receive the cookie from res.cookie()
                 
             });

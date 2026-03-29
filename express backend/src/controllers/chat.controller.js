@@ -4,6 +4,8 @@ const axios = require("axios");
 const { v4: uuidv4 } = require('uuid');
 
 exports.sendMessage = async (req, res) => {
+   const AgentUrl = 'https://agent-backend-3s9n.onrender.com'
+    
   try {
     const { message, conversationId } = req.body;
     const user = req.user;
@@ -21,7 +23,7 @@ exports.sendMessage = async (req, res) => {
       title: !conversationId ? (message.substring(0, 30) + "...") : undefined 
     });
 
-    const aiResponse = await axios.post("https://agentic-ai-ycsg.onrender.com/chat", {
+    const aiResponse = await axios.post(`${AgentUrl}/chat`, {
         conversation_id: activeId,
         message: message
     });

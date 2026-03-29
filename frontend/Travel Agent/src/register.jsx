@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
+     const AgentUrl = 'https://agent-backend-3s9n.onrender.com'
+    const BackendUrl = 'https://express-backend-quh7.onrender.com'
     const [formData, setFormData] = useState({
         username: '',
         email: '',
@@ -19,7 +21,7 @@ const Register = () => {
         e.preventDefault();
         try {
             // Adjust the URL to match your Express signup route
-            const response = await axios.post('https://travel-agent-ltzc.onrender.com/api/auth/register', formData);
+            const response = await axios.post(`${BackendUrl}/api/auth/register`, formData);
             
             if (response.status === 201 || response.status === 200) {
                 setMessage('Registration successful! Redirecting to login...');

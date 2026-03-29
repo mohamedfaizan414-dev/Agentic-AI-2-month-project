@@ -17,7 +17,8 @@ const ChatPage = () => {
 
     const scrollRef = useRef(null);
     const navigate = useNavigate();
-    
+    const AgentUrl = 'https://agent-backend-3s9n.onrender.com'
+    const BackendUrl = 'https://express-backend-quh7.onrender.com'
 
     // ✅ GET TOKEN
     const token = localStorage.getItem("token");
@@ -29,7 +30,7 @@ const ChatPage = () => {
             try {
 
                 const userRes = await axios.get(
-                    'https://travel-agent-ltzc.onrender.com/api/auth/me',
+                    `${BackendUrl}/api/auth/me`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`
@@ -41,7 +42,7 @@ const ChatPage = () => {
 
                 try {
                     const sessRes = await axios.get(
-                        'https://travel-agent-ltzc.onrender.com/api/sessions',
+                        `${BackendUrl}/api/sessions`,
                         {
                             headers: {
                                 Authorization: `Bearer ${token}`
@@ -78,7 +79,7 @@ const ChatPage = () => {
         try {
 
             const res = await axios.get(
-                `https://travel-agent-ltzc.onrender.com/api/history/${sessionId}`,
+                `${BackendUrl}/api/history/${sessionId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -120,7 +121,7 @@ const ChatPage = () => {
         try {
 
             const res = await axios.post(
-                'https://travel-agent-ltzc.onrender.com/api/chat',
+                `${BackendUrl}/api/chat`,
                 {
                     message: text,
                     conversationId: activeId
@@ -142,7 +143,7 @@ const ChatPage = () => {
                 setActiveId(res.data.conversationId);
 
                 const sessRes = await axios.get(
-                    'https://travel-agent-ltzc.onrender.com/api/sessions',
+                    `${BackendUrl}/api/sessions`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`
