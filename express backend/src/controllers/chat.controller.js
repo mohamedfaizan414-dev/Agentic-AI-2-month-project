@@ -20,7 +20,7 @@ exports.sendMessage = async (req, res) => {
       message: message,
       sender: "user",
       // Only set the title if it's the very first message of a new session
-      title: !conversationId ? (message.substring(0, 30) + "...") : undefined 
+      title: !conversationId ? (message.substring(0, 30) + "..") : undefined 
     });
 
     const aiResponse = await axios.post("https://agent-backend-3s9n.onrender.com/chat", {

@@ -182,10 +182,38 @@ def search_hotels_serp(destination: str, check_in: str, check_out: str) -> str:
     
     except Exception as e:
         return f"Hotel search error: {str(e)}"
+    
+def search_map(query: str) -> str:
+    """Search for a location on Google Maps and return a shareable link.
+    if asked for a places location use this tool and reply with the required details and the google map link
+    and return the link in the format " Link: [google maps link]"
+    """
+    client = serpapi.Client(api_key=os.getenv("SERP_API_KEY"))
+    results = client.search({
+        "engine": "google_maps",
+        "type": "search",
+        "q": query,
+        "ll": "@40.7455096,-74.0083012,14z"
+    })
+
+    # Accessing the list of places found
+    local_results = results.get("local_results", [])
+
+    for place in local_results:
+        name = place.get("title")
+        address = place.get("address")
+        # This is the direct link to the place on Google Maps
+        maps_link = place.get("links", {}).get("directions") or f"https://www.google.com/maps/search/?api=1&query={place.get('gps_coordinates', {}).get('latitude')},{place.get('gps_coordinates', {}).get('longitude')}"
+        return(
+        f"Name: {name}"
+        f"Address: {address}"
+        f"Link: {maps_link}"
+        "-" * 20)
+    print("[tool] search_map used")
 
 # AGENT
 
-tools = [search_tool, currency_exchanger, check_train_availability, weather_tool, search_hotels_serp]
+tools = [search_tool, currency_exchanger, check_train_availability, weather_tool, search_hotels_serp,search_map]
 
 # ✅ FIX 4: use create_react_agent correctly with prompt kwarg
 agent = create_react_agent(
