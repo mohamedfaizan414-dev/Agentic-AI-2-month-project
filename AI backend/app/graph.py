@@ -210,7 +210,8 @@ def search_map(query: str) -> str:
                 "address": loc.get("address"),
                 "link": loc.get("gps_coordinates") # or loc.get("link")
             })
-            
+        print("[tool] search_map used")
+        print(f"Map search results for '{query}': {simplified}")
         return json.dumps(simplified)
 
     except Exception as e:
