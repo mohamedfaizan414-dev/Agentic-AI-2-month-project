@@ -219,10 +219,10 @@ def search_map(query: str) -> str:
                 "google_maps_link": res.get("links", {}).get("directions") or 
                                     f"https://www.google.com/maps/search/?api=1&query={res.get('gps_coordinates', {}).get('latitude')},{res.get('gps_coordinates', {}).get('longitude')}"
             } 
-            for res in local_results[:5]
+            
         ]
 
-        return json.dumps(formatted_results, indent=2)
+        return json.dumps(formatted_results[:5])
 
     except Exception as e:
         return f"Map search error: {str(e)}"
