@@ -24,7 +24,7 @@ load_dotenv()
 # LLM SETUP
 
 llm = ChatGroq(
-    model="llama3-groq-70b-8192-tool-use-preview",   # ✅ FIX 2: valid Groq model
+    model="meta-llama/llama-4-scout-17b-16e-instruct",   # ✅ FIX 2: valid Groq model
     temperature=0,
 )
 
