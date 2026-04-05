@@ -187,8 +187,18 @@ def search_hotels_serp(destination: str, check_in: str, check_out: str) -> str:
 
 @tool
 def search_map(query: str) -> str:
-    """Search for a location on Google Maps and return details and a link."""
+    """
+    Search for a location on Google Maps and return name, address, and a link.
+    - query: The name or category of the place.
+    
+    INSTRUCTIONS:
+    - ALWAYS include the 'google_maps_link' in your response.
+    - Professionalism: Provide the link even if not explicitly asked.
+    - Format: Name, Address, then the Link at the end.
+    """
+    print("[tool] search_map used")
     try:
+        # Using the Client method as requested
         client = serpapi.Client(api_key=os.getenv("SERP_API_KEY"))
         results = client.search({
             "engine": "google_maps",
@@ -196,23 +206,13 @@ def search_map(query: str) -> str:
             "q": query
         })
 
-        # Try multiple common keys returned by SerpApi for Maps
-        locations = results.get("local_results") or results.get("place_results") or []
+        local_results = results.get("local_results", [])
 
-        if not locations:
+        if not local_results:
             return f"No location results found for '{query}'."
 
-        # Return a simplified version to avoid serialization errors or token limits
-        simplified = []
-        for loc in locations[:3]:
-            simplified.append({
-                "name": loc.get("title"),
-                "address": loc.get("address"),
-                "link": loc.get("gps_coordinates") # or loc.get("link")
-            })
-        print("[tool] search_map used")
-        print(f"Map search results for '{query}': {simplified}")
-        return json.dumps(simplified)
+
+        return json.dumps(local_results[:5])
 
     except Exception as e:
         return f"Map search error: {str(e)}"
