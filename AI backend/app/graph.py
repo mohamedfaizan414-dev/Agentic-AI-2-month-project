@@ -212,7 +212,7 @@ def search_map(query: str) -> str:
             return f"No location results found for '{query}'."
 
 
-        return json.dumps(local_results[:5])
+        return json.dumps(local_results)
 
     except Exception as e:
         return f"Map search error: {str(e)}"
