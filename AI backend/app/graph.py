@@ -184,35 +184,48 @@ def search_hotels_serp(destination: str, check_in: str, check_out: str) -> str:
         return f"Hotel search error: {str(e)}"
 
 
+
 @tool
 def search_map(query: str) -> str:
-    """Search for a location on Google Maps and return a shareable link.
-    if asked for a places location use this tool and reply with the required details and the google map link
-    When you need to use a tool, output ONLY the tool call. Do not include conversational text or explanations before or after the tool call.
     """
-    client = serpapi.Client(api_key=os.getenv("SERP_API_KEY"))
-    results = client.search({
-        "engine": "google_maps",
-        "type": "search",
-        "q": query,
-        "ll": "@40.7455096,-74.0083012,14z"
-    })
-
-    # Accessing the list of places found
-    local_results = results.get("local_results", [])
-
-    for place in local_results:
-        name = place.get("title")
-        address = place.get("address")
-        # This is the direct link to the place on Google Maps
-        maps_link = place.get("links", {}).get("directions") or f"https://www.google.com/maps/search/?api=1&query={place.get('gps_coordinates', {}).get('latitude')},{place.get('gps_coordinates', {}).get('longitude')}"
-        return(
-        f"Name: {name}"
-        f"Address: {address}"
-        f"Link: {maps_link}"
-        "-" * 20)
+    Search for a location on Google Maps and return name, address, and a link.
+    - query: The name or category of the place.
+    
+    INSTRUCTIONS:
+    - ALWAYS include the 'google_maps_link' in your response.
+    - Professionalism: Provide the link even if not explicitly asked.
+    - Format: Name, Address, then the Link at the end.
+    """
     print("[tool] search_map used")
+    try:
+        # Using the Client method as requested
+        client = serpapi.Client(api_key=os.getenv("SERP_API_KEY"))
+        results = client.search({
+            "engine": "google_maps",
+            "type": "search",
+            "q": query
+        })
 
+        local_results = results.get("local_results", [])
+
+        if not local_results:
+            return f"No location results found for '{query}'."
+
+        # Process top 5 results without a standard for loop (List Comprehension)
+        formatted_results = [
+            {
+                "title": res.get("title"),
+                "address": res.get("address"),
+                "google_maps_link": res.get("links", {}).get("directions") or 
+                                    f"https://www.google.com/maps/search/?api=1&query={res.get('gps_coordinates', {}).get('latitude')},{res.get('gps_coordinates', {}).get('longitude')}"
+            } 
+            for res in local_results[:5]
+        ]
+
+        return json.dumps(formatted_results, indent=2)
+
+    except Exception as e:
+        return f"Map search error: {str(e)}"
 # AGENT
 
 tools = [search_tool, currency_exchanger, check_train_availability, weather_tool, search_hotels_serp,search_map]
