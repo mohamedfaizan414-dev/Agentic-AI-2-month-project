@@ -23,7 +23,7 @@ exports.sendMessage = async (req, res) => {
       title: !conversationId ? (message.substring(0, 30) + "..") : undefined 
     });
 
-    const aiResponse = await axios.post("https://agent-backend-3s9n.onrender.com/chat", {
+    const aiResponse = await axios.post("https://agentic-ai-ycsg.onrender.com", {
         conversation_id: activeId,
         message: message
     });
