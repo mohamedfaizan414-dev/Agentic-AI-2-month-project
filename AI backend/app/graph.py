@@ -211,18 +211,8 @@ def search_map(query: str) -> str:
         if not local_results:
             return f"No location results found for '{query}'."
 
-        # Process top 5 results without a standard for loop (List Comprehension)
-        formatted_results = [
-            {
-                "title": res.get("title"),
-                "address": res.get("address"),
-                "google_maps_link": res.get("links", {}).get("directions") or 
-                                    f"https://www.google.com/maps/search/?api=1&query={res.get('gps_coordinates', {}).get('latitude')},{res.get('gps_coordinates', {}).get('longitude')}"
-            } 
-            
-        ]
 
-        return json.dumps(formatted_results[:5])
+        return json.dumps(local_results[:5])
 
     except Exception as e:
         return f"Map search error: {str(e)}"
