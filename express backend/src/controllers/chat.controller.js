@@ -28,6 +28,8 @@ exports.sendMessage = async (req, res) => {
         message: message
     });
 
+
+  
     const botReply = aiResponse.data.reply;
 
     // Save Bot Reply
