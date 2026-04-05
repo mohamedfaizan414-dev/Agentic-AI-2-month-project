@@ -892,6 +892,73 @@ body::before {
   box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
 }
 
+/* Google Maps link card */
+.map-link-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin: 6px 0;
+  background: #1a1a2e;
+  border: 1px solid #2a6ef5;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #e8f0fe;
+  font-size: 13px;
+  transition: background 0.15s, border-color 0.15s;
+  max-width: 100%;
+}
+
+.map-link-card:hover {
+  background: #1e2a50;
+  border-color: #5a9dff;
+}
+
+.map-link-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #2a6ef5;
+  border-radius: 8px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.map-link-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.map-link-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e8f0fe;
+}
+
+.map-link-place {
+  font-size: 11px;
+  color: #8ab4f8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Generic inline links */
+.inline-link {
+  color: #5a9dff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  word-break: break-word;
+}
+
+.inline-link:hover {
+  color: #8ab4f8;
+}
 .input-box button {
   position: absolute;
   right: 10px;
