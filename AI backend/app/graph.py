@@ -24,7 +24,7 @@ load_dotenv()
 # LLM SETUP
 
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",   # ✅ FIX 2: valid Groq model
+    model="llama3-groq-70b-8192-tool-use-preview",   # ✅ FIX 2: valid Groq model
     temperature=0,
 )
 
@@ -188,13 +188,8 @@ def search_hotels_serp(destination: str, check_in: str, check_out: str) -> str:
 @tool
 def search_map(query: str) -> str:
     """
-    Search for a location on Google Maps and return name, address, and a link.
-    - query: The name or category of the place.
-    
-    INSTRUCTIONS:
-    - ALWAYS include the 'google_maps_link' in your response.
-    - Professionalism: Provide the link even if not explicitly asked.
-    - Format: Name, Address, then the Link at the end.
+  Search for a location on Google Maps to get address details and a map link.
+    - query: The name or category of the place (e.g., 'Eiffel Tower' or 'Hotels in Paris').
     """
     print("[tool] search_map used")
     try:
