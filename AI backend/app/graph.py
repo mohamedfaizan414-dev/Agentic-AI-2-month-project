@@ -182,11 +182,13 @@ def search_hotels_serp(destination: str, check_in: str, check_out: str) -> str:
     
     except Exception as e:
         return f"Hotel search error: {str(e)}"
-    
+
+
+@tool
 def search_map(query: str) -> str:
     """Search for a location on Google Maps and return a shareable link.
     if asked for a places location use this tool and reply with the required details and the google map link
-    and return the link in the format " Link: [google maps link]"
+    When you need to use a tool, output ONLY the tool call. Do not include conversational text or explanations before or after the tool call.
     """
     client = serpapi.Client(api_key=os.getenv("SERP_API_KEY"))
     results = client.search({
