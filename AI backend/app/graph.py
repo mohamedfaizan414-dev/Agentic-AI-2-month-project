@@ -211,9 +211,30 @@ def search_map(query: str) -> str:
 
     except Exception as e:
         return f"Map search error: {str(e)}"
+    
+@tool
+def search_flights(query:str)->str:
+    """
+    Search for flights and its availability 
+    """
+    client = serpapi.Client(api_key=os.getenv("SERP_API_KEY"))
+    results = client.search({
+    "engine": "google_flights",
+    "departure_id": query,
+    "arrival_id": query,
+    "currency": query,
+    "type": query,
+    "outbound_date": query
+        })
+    best_flights = results["best_flights"]
+    if not best_flights:
+        return f"No location results found for '{query}'."
+
+
+    return json.dumps(best_flights)
 # AGENT
 
-tools = [search_tool, currency_exchanger, check_train_availability, weather_tool, search_hotels_serp,search_map]
+tools = [search_tool, currency_exchanger, check_train_availability, weather_tool, search_hotels_serp,search_map,search_flights]
 
 # ✅ FIX 4: use create_react_agent correctly with prompt kwarg
 agent = create_react_agent(
