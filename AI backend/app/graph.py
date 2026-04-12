@@ -236,12 +236,12 @@ def search_flights(departure: str, arrival: str, date: str, currency: str = "USD
         })
         
         # Google Flights results usually nest under 'best_flights' or 'other_flights'
-        best_flights = results.get("best_flights", [])
+        best_flights = results.get("best_flights")
         
         if not best_flights:
             return f"No flights found from {departure} to {arrival} on {date}."
 
-        return json.dumps(best_flights, indent=2)
+        return json.dumps(best_flights)
 
     except Exception as e:
         return f"An error occurred: {str(e)}"
