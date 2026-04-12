@@ -221,6 +221,8 @@ def search_flights(departure: str, arrival: str, date: str, currency: str = "USD
     :param arrival: 3-letter IATA code (e.g., 'LAX')
     :param date: YYYY-MM-DD format
     :param currency: 3-letter currency code
+    if any parameter is missing,
+        ask the user for it instead of calling the tool, e.g. "Please provide departure and arrival airport, and the date of travel to search for flights.".
     """
     client = serpapi.Client(api_key=os.getenv("SERP_API_KEY"))
     
