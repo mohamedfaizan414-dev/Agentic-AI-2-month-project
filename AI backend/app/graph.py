@@ -224,22 +224,22 @@ def search_flights(departure: str, arrival: str, date: str, currency: str = "USD
     if any parameter is missing,
         ask the user for it instead of calling the tool, e.g. "Please provide departure and arrival airport, and the date of travel to search for flights.".
     """
-    client = serpapi.Client(api_key=os.getenv("SERP_API_KEY"))
-    
     try:
-        results = client.search({
+        params = {
             "engine": "google_flights",
             "departure_id": departure,
             "arrival_id": arrival,
             "outbound_date": date,
             "currency": currency,
-            "hl": "en",
-            "gl": "us"
-        })
+            "api_key": os.getenv("SERP_API_KEY")
+        }
         
-        # Google Flights results usually nest under 'best_flights' or 'other_flights'
-        best_flights = results.get("best_flights")
-        
+        # Directly call search
+        search = serpapi.search(params)
+            
+            # Google Flights results usually nest under 'best_flights' or 'other_flights'
+        best_flights = search.get("best_flights")
+            
         if not best_flights:
             return f"No flights found from {departure} to {arrival} on {date}."
 
