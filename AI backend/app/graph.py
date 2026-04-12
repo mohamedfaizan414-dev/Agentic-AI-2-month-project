@@ -211,27 +211,40 @@ def search_map(query: str) -> str:
 
     except Exception as e:
         return f"Map search error: {str(e)}"
-    
-@tool
-def search_flights(query:str)->str:
+
+
+@tool   
+def search_flights(departure: str, arrival: str, date: str, currency: str = "USD") -> str:
     """
-    Search for flights and its availability 
+    Search for flights using Google Flights via SerpApi.
+    :param departure: 3-letter IATA code (e.g., 'JFK')
+    :param arrival: 3-letter IATA code (e.g., 'LAX')
+    :param date: YYYY-MM-DD format
+    :param currency: 3-letter currency code
     """
     client = serpapi.Client(api_key=os.getenv("SERP_API_KEY"))
-    results = client.search({
-    "engine": "google_flights",
-    "departure_id": query,
-    "arrival_id": query,
-    "currency": query,
-    "type": query,
-    "outbound_date": query
+    
+    try:
+        results = client.search({
+            "engine": "google_flights",
+            "departure_id": departure,
+            "arrival_id": arrival,
+            "outbound_date": date,
+            "currency": currency,
+            "hl": "en",
+            "gl": "us"
         })
-    best_flights = results["best_flights"]
-    if not best_flights:
-        return f"No location results found for '{query}'."
+        
+        # Google Flights results usually nest under 'best_flights' or 'other_flights'
+        best_flights = results.get("best_flights", [])
+        
+        if not best_flights:
+            return f"No flights found from {departure} to {arrival} on {date}."
 
+        return json.dumps(best_flights, indent=2)
 
-    return json.dumps(best_flights)
+    except Exception as e:
+        return f"An error occurred: {str(e)}"
 # AGENT
 
 tools = [search_tool, currency_exchanger, check_train_availability, weather_tool, search_hotels_serp,search_map,search_flights]
