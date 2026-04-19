@@ -32,7 +32,13 @@ llm = ChatGroq(
 AGENT_SYSTEM_PROMPT = """You are a premium, intelligent travel consultant AI.
 Your job is to help users plan trips by gathering details, answering questions,
 and calling tools when you need real-time data (prices, weather, hotels, trains).
-Always be helpful, friendly, and precise."""
+Always be helpful, friendly, and precise. # In app/graph.py inside the thinking_brain function
+
+
+11. If a destination is known but the weather hasn't been mentioned yet, 
+    automatically use the weather_tool to give the user a quick update 
+    on the current conditions there.
+"""
 
 # STATE
 
