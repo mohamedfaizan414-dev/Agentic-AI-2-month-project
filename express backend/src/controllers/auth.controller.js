@@ -2,6 +2,7 @@
 const userModel = require("../model/user.model.js")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcryptjs")
+const { verify, welcome } = require("../middleware/email.js")
 
 async function registerUser(req,res){
 
@@ -19,16 +20,25 @@ async function registerUser(req,res){
     }
 
     const hash = await bcrypt.hash(password, 10)
-
+    verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const user = await userModel.create({
         username,
         email,
-        password: hash
+        password: hash,
+        verficationCode: verificationCode,
+        
+
     })
 
     const token = jwt.sign({
         id : user._id
     },process.env.JWT_SECRET)
+    
+
+    await verify(user.email, user.verificationCode)
+
+     // Generate a random 6-digit OTP
+    
 
     // ✅ send token instead of cookie
     res.status(201).json({
@@ -36,6 +46,20 @@ async function registerUser(req,res){
         user: user.username,
         token
     })
+}
+
+async function verifyEmail(req,res){
+    const {otp} = req.body
+    user = await userModel.findOne({verficationCode: otp})
+
+    if(!user){
+        return res.status(400).json({message: "Invalid OTP"})
+    }
+    user.isVerified = true
+    user.verficationCode = undefined
+    await user.save()
+    await welcome(user.email, user.username)
+    res.status(200).json({message: "Email verified successfully"})
 }
 
 async function loginUser(req,res){
@@ -81,4 +105,4 @@ async function getMe(req, res) {
     }
 }
 
-module.exports = { registerUser, loginUser, getMe }
+module.exports = { registerUser, loginUser, getMe, verifyEmail }

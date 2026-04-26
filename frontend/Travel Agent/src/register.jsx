@@ -22,8 +22,8 @@ const Register = () => {
         try {
             const response = await axios.post(`${BackendUrl}/api/auth/register`, formData);
             if (response.status === 201 || response.status === 200) {
-                setMessage('Account created! Redirecting to login…');
-                setTimeout(() => navigate('/login'), 2000);
+                setMessage('Account created! Redirecting to email verification…');
+                setTimeout(() => navigate('/verifyemail'), 2000);
             }
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed. Please try again.');
@@ -36,7 +36,7 @@ const Register = () => {
         <div className="auth-wrap">
             <div className="auth-bg-orb" />
             <div className="auth-card">
-                <div className="auth-logo">Travel<span>AI</span></div>
+                <div className="auth-logo">Azen<span>tix</span></div>
                 <h1 className="auth-title">Create account</h1>
                 <p className="auth-subtitle">Join thousands of smart explorers</p>
                 <div className="auth-divider" />

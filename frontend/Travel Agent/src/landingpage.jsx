@@ -10,7 +10,7 @@ const LandingPage = () => {
 
             {/* NAV */}
             <nav className="land-nav">
-                <div className="land-logo">Travel<span>AI</span></div>
+                <div className="land-logo">Azen<span>tix</span></div>
                 <div className="land-nav-links">
                     <button className="btn-ghost" onClick={() => navigate('/login')}>Sign In</button>
                     <button className="btn-primary" onClick={() => navigate('/register')}>Get Started</button>

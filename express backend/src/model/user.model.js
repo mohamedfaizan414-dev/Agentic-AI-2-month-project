@@ -16,6 +16,13 @@ const schema = new mongoose.Schema({
     password:{
         type:String,
         required: true
+    },
+    verficationCode: {
+        type: String,
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
     }
 })
 

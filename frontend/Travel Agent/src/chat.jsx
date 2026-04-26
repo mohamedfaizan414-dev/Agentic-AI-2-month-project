@@ -105,7 +105,7 @@ const ChatPage = () => {
 
             {/* SIDEBAR */}
             <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
-                <div className="sidebar-logo">Travel<span>AI</span></div>
+                <div className="sidebar-logo">Azent<span>tix</span></div>
 
                 <button
                     className="btn-new-chat"

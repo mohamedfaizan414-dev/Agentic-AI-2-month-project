@@ -981,7 +981,96 @@ body::before {
   margin-top: 10px;
   letter-spacing: 0.3px;
 }
+/* Container & Card */
+.auth-container {
+    min-height: 100vh;
+    background-color: #050506;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+}
 
+.auth-card {
+    background-color: #0b0e14;
+    width: 100%;
+    max-width: 420px;
+    padding: 50px 30px;
+    border-radius: 24px;
+    border: 1px solid #1c2128;
+    text-align: center;
+}
+
+/* Header Styles */
+.auth-logo { color: #fff; font-size: 20px; font-weight: 700; margin-bottom: 30px; letter-spacing: 1px; }
+.gold-dot { color: #d4af37; }
+.auth-header h1 { color: #fff; font-size: 26px; font-weight: 400; margin-bottom: 8px; }
+.auth-header p { color: #8b949e; font-size: 14px; margin-bottom: 35px; }
+
+/* OTP Bubbles */
+.input-label {
+    display: block;
+    color: #8b949e;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    letter-spacing: 1.5px;
+    text-align: left;
+}
+
+.otp-bubble-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.otp-bubble {
+    width: 50px;
+    height: 60px;
+    background-color: #12161d;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    color: #d4af37;
+    font-size: 22px;
+    font-weight: 600;
+    text-align: center;
+    /* Smooth transition for the focus state */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.otp-bubble:focus {
+    outline: none;
+    border-color: #d4af37;
+    background-color: #161b22;
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.15);
+    transform: translateY(-2px); /* Subtle lift on focus */
+}
+
+/* Button & Footer */
+.submit-btn {
+    width: 100%;
+    background-color: #d4af37;
+    color: #000;
+    border: none;
+    padding: 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.error-text { color: #ff4d4d; font-size: 12px; margin-bottom: 15px; }
+.auth-footer { margin-top: 25px; font-size: 13px; color: #8b949e; }
+.gold-link { color: #d4af37; cursor: pointer; font-weight: 500; }
+
+/* Responsive */
+@media (max-width: 400px) {
+    .otp-bubble { width: 42px; height: 52px; font-size: 18px; }
+    .otp-bubble-group { gap: 6px; }
+}
 /* ────────────────────────── RESPONSIVE ────────────────────────── */
 @media (max-width: 640px) {
   .land-nav { padding: 0 4%; }

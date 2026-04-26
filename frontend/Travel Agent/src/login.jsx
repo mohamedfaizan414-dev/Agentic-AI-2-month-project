@@ -42,7 +42,7 @@ const Login = () => {
         <div className="auth-wrap">
             <div className="auth-bg-orb" />
             <div className="auth-card">
-                <div className="auth-logo">Travel<span>AI</span></div>
+                <div className="auth-logo">Azen<span>tix</span></div>
                 <h1 className="auth-title">Welcome back</h1>
                 <p className="auth-subtitle">Sign in to continue your journey</p>
                 <div className="auth-divider" />
