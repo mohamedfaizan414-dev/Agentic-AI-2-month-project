@@ -9,7 +9,7 @@ try {
     to: email, // list of recipients
     subject: "Verify your Email", 
     text: "Email Verification", 
-    html: verifyEmail.replace('{{otp}}', verificationCode), // HTML body
+    html: verifyEmail.replace('{otp}', verificationCode), // HTML body
   });
 
   console.log("Message sent");
@@ -25,7 +25,7 @@ try {
     to: email, // list of recipients
     subject: "Welcome to Azentix!", 
     text: " Welcome to Azentix!", 
-    html: welcomeEmail.replace('{{name}}', name), // HTML body
+    html: welcomeEmail.replace('{name}', name), // HTML body
   });
 
   console.log("Message sent");
