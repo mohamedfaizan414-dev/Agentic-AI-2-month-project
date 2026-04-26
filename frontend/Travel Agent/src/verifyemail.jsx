@@ -47,7 +47,7 @@ const VerifyEmail = () => {
             });
 
             if (response.status === 200) {
-                navigate('/chat');
+                navigate('/login');
             } else {
                 const data = await response.data;
                 setError(data.message || 'Invalid code.');

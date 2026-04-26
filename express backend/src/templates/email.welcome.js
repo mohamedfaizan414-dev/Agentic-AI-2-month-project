@@ -88,7 +88,7 @@ const welcomeEmail = `
             <tr>
                 <td class="content">
                     <span class="eyebrow">The Destination Awaits</span>
-                    <h1>Welcome to Azentix {name}!</h1>
+                    <h1>Welcome to Azentix {name}</h1>
                     <p>You’ve unlocked a new standard of exploration. Where precision meets wanderlust, your AI-powered journey begins.</p>
                     
                     <a href="#" class="cta-btn">Start Exploring</a>

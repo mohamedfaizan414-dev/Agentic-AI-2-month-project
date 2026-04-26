@@ -35,9 +35,7 @@ async function registerUser(req,res){
     },process.env.JWT_SECRET)
     
 
-    await verify(user.email, user.verificationCode)
-
-     // Generate a random 6-digit OTP
+    await verify(user.email,verificationCode)
     
 
     // ✅ send token instead of cookie
