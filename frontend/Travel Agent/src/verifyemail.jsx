@@ -62,7 +62,7 @@ const VerifyEmail = () => {
     return (
         <div className="auth-container">
             <div className="auth-card">
-                <div className="auth-logo">Azentix<span className="gold-dot">.</span></div>
+                <div className="auth-logo">Azen<span className="gold-dot">tix</span></div>
 
                 <div className="auth-header">
                     <h1>Verify Email</h1>
