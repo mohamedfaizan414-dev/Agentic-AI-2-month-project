@@ -3,6 +3,7 @@
 An intelligent **AI-powered travel assistant** that helps users plan complete trips through a conversational interface.
 This project combines **modern web development with AI automation** to create a system that can assist users with travel planning, recommendations, and itinerary creation.
 Live link:https://travelagent-ten.vercel.app/
+
 The AI agent can understand travel-related questions and help users plan trips by suggesting destinations, accommodations, transport options, food, and activities.
 
 ---
