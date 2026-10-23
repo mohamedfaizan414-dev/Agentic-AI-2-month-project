@@ -8,6 +8,7 @@ router.post('/register', authController.registerUser)
 router.post('/login', authController.loginUser)
 router.get('/me',auth,authController.getMe)
 router.post('/verifyemail', authController.verifyEmail)
+router.post('/resend-verification', authController.resendVerification)
 
 module.exports = router
 

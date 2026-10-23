@@ -24,6 +24,7 @@ const schema = new mongoose.Schema({
         type: String,
     },
     verificationCodeExpiresAt: { type: Date },
+    verificationSentAt: { type: Date },
     isVerified: {
         type: Boolean,
         default: false

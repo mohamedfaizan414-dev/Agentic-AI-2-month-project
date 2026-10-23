@@ -1,120 +1,13 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './App.css';
+import React, { useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from './api.js';
+import './App.css';
 
-const VerifyEmail = () => {
-    const [otp, setOtp] = useState(['', '', '', '', '', '']);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const inputRefs = useRef([]);
-    const navigate = useNavigate();
-
-    const handleChange = (element, index) => {
-        if (isNaN(element.value)) return false;
-
-        const newOtp = [...otp];
-        newOtp[index] = element.value;
-        setOtp(newOtp);
-
-        // Auto-focus next input
-        if (element.value !== '' && index < 5) {
-            inputRefs.current[index + 1].focus();
-        }
-    };
-
-    const handleKeyDown = (e, index) => {
-        if (e.key === 'Backspace' && !otp[index] && index > 0) {
-            inputRefs.current[index - 1].focus();
-        }
-    };
-
-    const handlePaste = (e) => {
-        const code = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-        if (!code) return;
-        e.preventDefault();
-        setOtp(code.padEnd(6, ' ').split('').map((character) => character.trim()));
-        inputRefs.current[Math.min(code.length, 5)]?.focus();
-    };
-
-    const handleVerify = async (e) => {
-        e.preventDefault();
-        const fullCode = otp.join('');
-        
-        if (fullCode.length < 6) {
-            setError('Please enter the full 6-digit code.');
-            return;
-        }
-
-        setLoading(true);
-        setError('');
-
-        try {
-            const email = sessionStorage.getItem('verificationEmail');
-            if (!email) throw new Error('Please register again before verifying your email.');
-            const response = await api.post('/api/auth/verifyemail', { otp: fullCode, email });
-
-            if (response.status === 200) {
-                navigate('/login');
-            } else {
-                const data = await response.data;
-                setError(data.message || 'Invalid code.');
-            }
-        } catch (err) {
-            setError(err.response?.data?.message || err.message || 'Connection failed. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="auth-wrap auth-split">
-            <section className="auth-showcase">
-                <div className="auth-brand">Azen<span>tix</span></div>
-                <span className="eyebrow">ONE LAST STEP</span>
-                <h1>Confirm your<br /><em>passport to wander.</em></h1>
-                <p>We protect every saved plan, preference, and travel memory.</p>
-            </section>
-            <section className="auth-card">
-                <div className="auth-logo">Azen<span className="gold-dot">tix</span></div>
-
-                <div className="auth-header">
-                    <h1>Verify Email</h1>
-                    <p>Enter the code sent to your inbox</p>
-                </div>
-
-                <form onSubmit={handleVerify} className="auth-form">
-                    <label className="input-label">VERIFICATION CODE</label>
-                    <div className="otp-bubble-group">
-                        {otp.map((data, index) => (
-                            <input
-                                key={index}
-                                type="text"
-                                maxLength="1"
-                                className="otp-bubble"
-                                ref={(el) => (inputRefs.current[index] = el)}
-                                value={data}
-                                onChange={(e) => handleChange(e.target, index)}
-                                onKeyDown={(e) => handleKeyDown(e, index)}
-                                onPaste={handlePaste}
-                                required
-                            />
-                        ))}
-                    </div>
-
-                    {error && <p className="error-text">{error}</p>}
-
-                    <button type="submit" className="submit-btn" disabled={loading}>
-                        {loading ? 'Checking...' : 'Verify Journey'}
-                    </button>
-                </form>
-
-                <div className="auth-footer">
-                    <p>New here? <span className="gold-link">Create an account</span></p>
-                </div>
-            </section>
-        </div>
-    );
-};
-
-export default VerifyEmail;
+export default function VerifyEmail() {
+  const [email, setEmail] = useState(() => sessionStorage.getItem('verificationEmail') || ''); const [otp, setOtp] = useState(['', '', '', '', '', '']); const [status, setStatus] = useState(''); const [error, setError] = useState(''); const [loading, setLoading] = useState(false); const [resending, setResending] = useState(false); const refs = useRef([]); const navigate = useNavigate();
+  const updateCode = (value, index) => { if (!/^\d?$/.test(value)) return; const next = [...otp]; next[index] = value; setOtp(next); if (value && index < 5) refs.current[index + 1]?.focus(); };
+  const paste = (event) => { const digits = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6); if (!digits) return; event.preventDefault(); setOtp(digits.padEnd(6, ' ').split('').map((value) => value.trim())); refs.current[Math.min(digits.length, 5)]?.focus(); };
+  const verify = async (event) => { event.preventDefault(); const code = otp.join(''); setError(''); if (!email) return setError('Enter the email address you registered with.'); if (code.length !== 6) return setError('Enter the complete six-digit code.'); setLoading(true); try { await api.post('/api/auth/verifyemail', { email, otp: code }); sessionStorage.removeItem('verificationEmail'); navigate('/login', { replace: true }); } catch (response) { setError(response.response?.data?.message || 'We could not verify that code.'); } finally { setLoading(false); } };
+  const resend = async () => { setError(''); setStatus(''); if (!email) return setError('Enter your email address first.'); setResending(true); try { const { data } = await api.post('/api/auth/resend-verification', { email }); setStatus(data.message); sessionStorage.setItem('verificationEmail', email); } catch (response) { setError(response.response?.data?.message || 'We could not send a new code.'); } finally { setResending(false); } };
+  return <div className="auth-page"><aside className="auth-panel"><Link className="wordmark" to="/">ATLAS<span>.</span></Link><div className="auth-panel-copy"><p className="kicker">ONE LAST DETAIL</p><h1>Keep your plans <em>private.</em></h1><p>We verify your email before saving your personal travel desk.</p></div><div className="auth-panel-note"><span>03</span><p>Your code is valid for ten minutes. You can request another whenever you need it.</p></div></aside><main className="auth-main"><div className="auth-form-wrap"><Link className="mobile-wordmark" to="/">ATLAS<span>.</span></Link><p className="kicker">VERIFY YOUR EMAIL</p><h2>Check your inbox.</h2><p className="auth-lead">Enter the six-digit code we sent you.</p><form className="auth-form" onSubmit={verify}><label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label><div><label>Verification code</label><div className="otp-row">{otp.map((digit, index) => <input key={index} ref={(element) => { refs.current[index] = element; }} value={digit} inputMode="numeric" maxLength="1" onChange={(event) => updateCode(event.target.value, index)} onKeyDown={(event) => { if (event.key === 'Backspace' && !otp[index] && index) refs.current[index - 1]?.focus(); }} onPaste={paste} aria-label={`Code digit ${index + 1}`} />)}</div></div>{error && <p className="form-alert" role="alert">{error}</p>}{status && <p className="form-status">{status}</p>}<button className="primary-button" disabled={loading}>{loading ? 'Verifying…' : 'Verify email'}</button></form><button type="button" className="text-button resend-button" onClick={resend} disabled={resending}>{resending ? 'Sending a new code…' : 'Didn’t get a code? Send another'}</button><p className="auth-switch">Already verified? <Link to="/login">Sign in</Link></p></div></main></div>;
+}

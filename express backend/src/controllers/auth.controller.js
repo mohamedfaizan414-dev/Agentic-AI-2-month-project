@@ -7,6 +7,8 @@ const { verify, welcome } = require('../middleware/email.js');
 const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
 const signToken = (user) => jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
 const verificationCode = () => crypto.randomInt(100000, 1000000).toString();
+const verificationExpiry = () => new Date(Date.now() + 10 * 60 * 1000);
+const sendVerification = (user, code) => verify(user.email, code).catch((error) => console.error('Verification email failed:', error.message));
 
 async function registerUser(req, res, next) {
   try {
@@ -15,13 +17,46 @@ async function registerUser(req, res, next) {
     if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ message: 'Enter a valid email address.' });
     if (password.length < 8) return res.status(400).json({ message: 'Password must be at least 8 characters.' });
     if (await userModel.exists({ $or: [{ username }, { email }] })) return res.status(409).json({ message: 'An account with that username or email already exists.' });
+
     const code = verificationCode();
-    const user = await userModel.create({ username, email, password: await bcrypt.hash(password, 12), verficationCode: code, verificationCodeExpiresAt: new Date(Date.now() + 10 * 60 * 1000) });
-    try { await verify(user.email, code); } catch (error) { console.error('Verification email failed', error.message); }
-    return res.status(201).json({ message: 'Account created. Check your email for the verification code.', email: user.email });
+    const user = await userModel.create({ username, email, password: await bcrypt.hash(password, 10), verficationCode: code, verificationCodeExpiresAt: verificationExpiry(), verificationSentAt: new Date() });
+    sendVerification(user, code);
+    return res.status(201).json({ message: 'Account created.', email: user.email, verificationRequired: true });
   } catch (error) { return next(error); }
 }
-async function verifyEmail(req, res, next) { try { const email = normalizeEmail(req.body.email); const otp = String(req.body.otp || ''); const user = await userModel.findOne({ email, verficationCode: otp, verificationCodeExpiresAt: { $gt: new Date() } }); if (!user) return res.status(400).json({ message: 'That code is invalid or has expired.' }); user.isVerified = true; user.verficationCode = undefined; user.verificationCodeExpiresAt = undefined; await user.save(); welcome(user.email, user.username).catch((error) => console.error('Welcome email failed', error.message)); return res.json({ message: 'Email verified. You can now sign in.' }); } catch (error) { return next(error); } }
-async function loginUser(req, res, next) { try { const identifier = String(req.body.username || req.body.email || '').trim(); const password = String(req.body.password || ''); const user = await userModel.findOne({ $or: [{ username: identifier }, { email: normalizeEmail(identifier) }] }); if (!user || !(await bcrypt.compare(password, user.password))) return res.status(401).json({ message: 'Incorrect email or password.' }); if (!user.isVerified) return res.status(403).json({ message: 'Verify your email before signing in.' }); return res.json({ message: 'Signed in successfully.', user: user.username, token: signToken(user) }); } catch (error) { return next(error); } }
+
+async function resendVerification(req, res, next) {
+  try {
+    const email = normalizeEmail(req.body.email); const user = await userModel.findOne({ email });
+    if (!user) return res.status(200).json({ message: 'If that account exists, a verification email is on its way.' });
+    if (user.isVerified) return res.status(409).json({ message: 'This email is already verified. Please sign in.' });
+    if (user.verificationSentAt && Date.now() - user.verificationSentAt.getTime() < 60_000) return res.status(429).json({ message: 'Please wait one minute before requesting another code.' });
+    const code = verificationCode(); user.verficationCode = code; user.verificationCodeExpiresAt = verificationExpiry(); user.verificationSentAt = new Date(); await user.save();
+    sendVerification(user, code);
+    return res.json({ message: 'A fresh verification code is on its way.', email: user.email });
+  } catch (error) { return next(error); }
+}
+
+async function verifyEmail(req, res, next) {
+  try {
+    const email = normalizeEmail(req.body.email); const otp = String(req.body.otp || '');
+    const user = await userModel.findOne({ email, verficationCode: otp, verificationCodeExpiresAt: { $gt: new Date() } });
+    if (!user) return res.status(400).json({ message: 'That code is invalid or has expired. Request a new one and try again.' });
+    user.isVerified = true; user.verficationCode = undefined; user.verificationCodeExpiresAt = undefined; user.verificationSentAt = undefined; await user.save();
+    welcome(user.email, user.username).catch((error) => console.error('Welcome email failed:', error.message));
+    return res.json({ message: 'Email verified. You can now sign in.' });
+  } catch (error) { return next(error); }
+}
+
+async function loginUser(req, res, next) {
+  try {
+    const identifier = String(req.body.username || req.body.email || '').trim(); const password = String(req.body.password || '');
+    const user = await userModel.findOne({ $or: [{ username: identifier }, { email: normalizeEmail(identifier) }] });
+    if (!user || !(await bcrypt.compare(password, user.password))) return res.status(401).json({ message: 'Incorrect email or password.' });
+    if (!user.isVerified) return res.status(403).json({ code: 'EMAIL_UNVERIFIED', message: 'Your email still needs verification.', email: user.email });
+    return res.json({ message: 'Signed in successfully.', user: user.username, token: signToken(user) });
+  } catch (error) { return next(error); }
+}
+
 async function getMe(req, res) { return res.json(req.user); }
-module.exports = { registerUser, loginUser, getMe, verifyEmail };
+module.exports = { registerUser, resendVerification, loginUser, getMe, verifyEmail };
