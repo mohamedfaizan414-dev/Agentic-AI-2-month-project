@@ -3,8 +3,12 @@
 from fastapi import APIRouter
 from langchain_core.messages import AIMessage, HumanMessage
 import asyncio
-from .models import ChatRequest, ChatResponse
-from .graph import workflow
+try:
+    from .models import ChatRequest, ChatResponse
+    from .graph import workflow
+except ImportError:
+    from models import ChatRequest, ChatResponse
+    from graph import workflow
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 

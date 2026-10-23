@@ -1,6 +1,11 @@
 import os
 from fastapi import FastAPI
-from .api import router
+try:
+    # Package import: uvicorn app.main:app
+    from .api import router
+except ImportError:
+    # Standalone import: uvicorn main:app (Render's existing configuration)
+    from api import router
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
