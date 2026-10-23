@@ -9,6 +9,9 @@ const chatSchema = new mongoose.Schema({
   message: { type: String, required: true },
   sender: { type: String, enum: ["user", "bot"], required: true },
   createdAt: { type: Date, default: Date.now }
-});
+}, { versionKey: false });
+
+chatSchema.index({ user: 1, conversationId: 1, createdAt: 1 });
+chatSchema.index({ user: 1, createdAt: -1 });
 
 module.exports = mongoose.model("chat", chatSchema);

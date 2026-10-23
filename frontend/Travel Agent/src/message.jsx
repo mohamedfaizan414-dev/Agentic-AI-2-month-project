@@ -34,7 +34,9 @@ const extractLocationName = (href) => {
     if (place) return decodeURIComponent(place[1].replace(/\+/g, " "));
     const q = url.searchParams.get("q");
     if (q) return decodeURIComponent(q);
-  } catch {}
+  } catch {
+    return null;
+  }
   return null;
 };
 
@@ -88,25 +90,25 @@ const MarkdownRenderer = ({ content }) => {
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            h1: ({ node, ...props }) => <h1 className="md-heading-1" {...props} />,
-            h2: ({ node, ...props }) => <h2 className="md-heading-2" {...props} />,
-            h3: ({ node, ...props }) => <h3 className="md-heading-3" {...props} />,
-            p:  ({ node, ...props }) => <p  className="md-paragraph"  {...props} />,
-            ul: ({ node, ...props }) => <ul className="md-list"        {...props} />,
-            ol: ({ node, ...props }) => <ol className="md-list"        {...props} />,
-            li: ({ node, ...props }) => <li className="md-list-item"   {...props} />,
-            blockquote: ({ node, ...props }) => (
+            h1: ({ node: _node, ...props }) => <h1 className="md-heading-1" {...props} />,
+            h2: ({ node: _node, ...props }) => <h2 className="md-heading-2" {...props} />,
+            h3: ({ node: _node, ...props }) => <h3 className="md-heading-3" {...props} />,
+            p:  ({ node: _node, ...props }) => <p  className="md-paragraph"  {...props} />,
+            ul: ({ node: _node, ...props }) => <ul className="md-list"        {...props} />,
+            ol: ({ node: _node, ...props }) => <ol className="md-list"        {...props} />,
+            li: ({ node: _node, ...props }) => <li className="md-list-item"   {...props} />,
+            blockquote: ({ node: _node, ...props }) => (
               <blockquote className="md-callout" {...props} />
             ),
-            a: ({ node, href, children, ...props }) => (
+            a: ({ node: _node, href, children }) => (
               <LinkRenderer href={href} children={children} />
             ),
-            table: ({ node, ...props }) => (
+            table: ({ node: _node, ...props }) => (
               <div className="table-wrapper">
                 <table className="custom-markdown-table" {...props} />
               </div>
             ),
-            code({ node, inline, className, children, ...props }) {
+            code({ node: _node, inline, className, children, ...props }) {
               const match = /language-(\w+)/.exec(className || "");
               const codeString = String(children).replace(/\n$/, "");
               return !inline && match ? (

@@ -1,15 +1,10 @@
-require('dotenv').config({ debug: true });
-const app = require("./src/app.js")
-const connectDB = require("./src/db/db.js")
+require('dotenv').config();
+const app = require('./src/app.js');
+const connectDB = require('./src/db/db.js');
 
-connectDB()
-
-app.get('/pings',(req,res)=>{
-    res.json({message: "server is active"})
-})
-
-app.listen(3000,()=>{
-    console.log("Server started")
-})
-
-
+const port = Number(process.env.PORT || 3000);
+async function start() {
+  await connectDB();
+  app.listen(port, () => console.log(`API listening on ${port}`));
+}
+start().catch((error) => { console.error('Unable to start API', error); process.exit(1); });

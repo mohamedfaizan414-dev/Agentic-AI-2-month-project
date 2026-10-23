@@ -15,14 +15,13 @@ module.exports = async function auth(req, res, next) {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
-    const user = await userModel.findById(decoded.id)
+    const user = await userModel.findById(decoded.id).select('_id username email isVerified')
 
     if (!user) return res.status(401).json({ message: "Invalid token" })
 
     req.user = user
     next()
   } catch (err) {
-    console.log(err)
-    res.status(401).json({ message: "hii",err })
+    res.status(401).json({ message: "Your session has expired. Please sign in again." })
   }
 }

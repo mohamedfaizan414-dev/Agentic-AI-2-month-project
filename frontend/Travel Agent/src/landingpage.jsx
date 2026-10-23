@@ -20,25 +20,19 @@ const LandingPage = () => {
             {/* HERO */}
             <header className="land-hero">
                 <div className="hero-glow" />
-                <div className="hero-badge">
-                    <span className="hero-badge-dot" />
-                    AI-Powered Travel Planning
-                </div>
-                <h1 className="hero-title">
-                    Explore the world,<br />
-                    <em>differently.</em>
-                </h1>
-                <p className="hero-sub">
-                    Your personal AI travel concierge. Curated itineraries, 
-                    real-time budgets, and hidden gems — crafted for you in seconds.
-                </p>
-                <div className="hero-cta">
-                    <button className="btn-hero" onClick={() => navigate('/register')}>
-                        Start Planning Free
-                    </button>
-                    <button className="btn-hero-out" onClick={() => navigate('/login')}>
-                        View Demo
-                    </button>
+                <div className="hero-layout">
+                    <div className="hero-copy">
+                        <div className="hero-badge"><span className="hero-badge-dot" /> AI-Powered Travel Planning</div>
+                        <h1 className="hero-title">Explore the world,<br /><em>differently.</em></h1>
+                        <p className="hero-sub">Your personal AI travel concierge. Curated itineraries, real-time budgets, and hidden gems — crafted for you in seconds.</p>
+                        <div className="hero-cta"><button className="btn-hero" onClick={() => navigate('/register')}>Start Planning Free</button><button className="btn-hero-out" onClick={() => navigate('/login')}>Explore your plans</button></div>
+                    </div>
+                    <div className="hero-preview" aria-label="A preview of a personalised travel itinerary">
+                        <div className="preview-top"><span>✦ Your next escape</span><small>Personalized</small></div>
+                        <div className="preview-place"><span>JAPAN</span><strong>Tokyo → Kyoto</strong><small>12–19 October · 7 nights</small></div>
+                        <div className="preview-days"><div><b>01</b><span>Arrive in Tokyo<br /><small>Shibuya at golden hour</small></span></div><div><b>03</b><span>Mountain air<br /><small>Day trip to Hakone</small></span></div><div><b>05</b><span>Slow Kyoto<br /><small>Tea, temples, evening walk</small></span></div></div>
+                        <div className="preview-footer"><span>Built around your pace</span><span>→</span></div>
+                    </div>
                 </div>
 
                 <div className="hero-scroll">

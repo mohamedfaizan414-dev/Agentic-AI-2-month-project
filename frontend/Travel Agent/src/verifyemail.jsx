@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import './App.css';
+import { api } from './api.js';
 
 const VerifyEmail = () => {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -29,6 +29,14 @@ const VerifyEmail = () => {
         }
     };
 
+    const handlePaste = (e) => {
+        const code = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+        if (!code) return;
+        e.preventDefault();
+        setOtp(code.padEnd(6, ' ').split('').map((character) => character.trim()));
+        inputRefs.current[Math.min(code.length, 5)]?.focus();
+    };
+
     const handleVerify = async (e) => {
         e.preventDefault();
         const fullCode = otp.join('');
@@ -42,9 +50,9 @@ const VerifyEmail = () => {
         setError('');
 
         try {
-            const response = await axios.post('https://express-backend-quh7.onrender.com/api/auth/verifyemail', {
-                otp: fullCode
-            });
+            const email = sessionStorage.getItem('verificationEmail');
+            if (!email) throw new Error('Please register again before verifying your email.');
+            const response = await api.post('/api/auth/verifyemail', { otp: fullCode, email });
 
             if (response.status === 200) {
                 navigate('/login');
@@ -53,15 +61,21 @@ const VerifyEmail = () => {
                 setError(data.message || 'Invalid code.');
             }
         } catch (err) {
-            setError('Connection failed. Please try again.');
+            setError(err.response?.data?.message || err.message || 'Connection failed. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="auth-container">
-            <div className="auth-card">
+        <div className="auth-wrap auth-split">
+            <section className="auth-showcase">
+                <div className="auth-brand">Azen<span>tix</span></div>
+                <span className="eyebrow">ONE LAST STEP</span>
+                <h1>Confirm your<br /><em>passport to wander.</em></h1>
+                <p>We protect every saved plan, preference, and travel memory.</p>
+            </section>
+            <section className="auth-card">
                 <div className="auth-logo">Azen<span className="gold-dot">tix</span></div>
 
                 <div className="auth-header">
@@ -82,6 +96,7 @@ const VerifyEmail = () => {
                                 value={data}
                                 onChange={(e) => handleChange(e.target, index)}
                                 onKeyDown={(e) => handleKeyDown(e, index)}
+                                onPaste={handlePaste}
                                 required
                             />
                         ))}
@@ -97,7 +112,7 @@ const VerifyEmail = () => {
                 <div className="auth-footer">
                     <p>New here? <span className="gold-link">Create an account</span></p>
                 </div>
-            </div>
+            </section>
         </div>
     );
 };
