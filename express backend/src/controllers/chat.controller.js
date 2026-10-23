@@ -1,78 +1,26 @@
-
-const chatModel = require("../model/chat.model");
-const axios = require("axios");
+const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
+const chatModel = require('../model/chat.model');
 
-exports.sendMessage = async (req, res) => {
-   
-    
+const aiClient = axios.create({ baseURL: process.env.AI_SERVICE_URL || 'https://agentic-ai-ycsg.onrender.com', timeout: Number(process.env.AI_TIMEOUT_MS || 30000), headers: { 'Content-Type': 'application/json' } });
+const cleanMessage = (value) => String(value || '').trim();
+
+exports.sendMessage = async (req, res, next) => {
   try {
-    const { message, conversationId } = req.body;
-    const user = req.user;
-    
-    // If no conversationId is sent, this is a "New Chat" -> create a new UUID
-    const activeId = conversationId || uuidv4();
-
-    // Save User Message
-    await chatModel.create({
-      user: user._id,
-      conversationId: activeId,
-      message: message,
-      sender: "user",
-      // Only set the title if it's the very first message of a new session
-      title: !conversationId ? (message.substring(0, 30) + "..") : undefined 
-    });
-
-    const aiResponse = await axios.post("https://agentic-ai-ycsg.onrender.com/chat", {
-        conversation_id: activeId,
-        message: message
-    });
-
-    const botReply = aiResponse.data.reply;
-
-    // Save Bot Reply
-    await chatModel.create({
-      user: user._id,
-      conversationId: activeId,
-      message: botReply,
-      sender: "bot"
-    });
-
-    // Return the activeId so the frontend knows which session it is in
-    res.status(200).json({ reply: botReply, conversationId: activeId });
-  } catch (error) {
-    res.status(500).json({ error: error});
-  }
+    const message = cleanMessage(req.body.message); const requestedId = cleanMessage(req.body.conversationId);
+    if (!message || message.length > 2000) return res.status(400).json({ message: 'Messages must contain 1–2,000 characters.' });
+    const conversationId = requestedId || uuidv4(); const title = requestedId ? undefined : `${message.slice(0, 48)}${message.length > 48 ? '…' : ''}`;
+    await chatModel.create({ user: req.user._id, conversationId, message, sender: 'user', title });
+    const context = await chatModel.find({ user: req.user._id, conversationId }).sort({ createdAt: -1 }).limit(12).select('message sender -_id').lean();
+    context.reverse();
+    let response;
+    try { response = await aiClient.post('/chat', { conversation_id: conversationId, message, history: context.map((turn) => ({ role: turn.sender === 'bot' ? 'assistant' : 'user', content: turn.message })) }); }
+    catch (error) { console.error('AI upstream error:', error.code || error.response?.status); return res.status(503).json({ message: 'Our travel concierge is temporarily unavailable. Please try again shortly.' }); }
+    const reply = cleanMessage(response.data?.reply);
+    if (!reply) return res.status(502).json({ message: 'The concierge returned an empty response. Please try again.' });
+    await chatModel.create({ user: req.user._id, conversationId, message: reply, sender: 'bot' });
+    return res.json({ reply, conversationId, stage: response.data.stage, itinerary: response.data.itinerary });
+  } catch (error) { return next(error); }
 };
-
-exports.getSessions = async (req, res) => {
-  try {
-    // This groups messages by conversationId so the sidebar shows unique chats
-    const sessions = await chatModel.aggregate([
-      { $match: { user: req.user._id } },
-      { $sort: { createdAt: 1 } }, 
-      { $group: { 
-          _id: "$conversationId", 
-          title: { $first: "$title" }, 
-          lastUpdated: { $max: "$createdAt" } 
-      }},
-      { $sort: { lastUpdated: -1 } }
-    ]);
-    res.status(200).json(sessions);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch sessions" });
-  }
-};
-
-exports.getChatHistory = async (req, res) => {
-    try {
-        // CRITICAL: Filter by BOTH user and the specific conversationId
-        const history = await chatModel.find({ 
-            user: req.user._id, 
-            conversationId: req.params.id 
-        }).sort({ createdAt: 1 });
-        res.status(200).json(history);
-    } catch (error) {
-        res.status(500).json({ error: "Could not fetch history" });
-    }
-};
+exports.getSessions = async (req, res, next) => { try { const sessions = await chatModel.aggregate([{ $match: { user: req.user._id } }, { $sort: { createdAt: 1 } }, { $group: { _id: '$conversationId', title: { $first: '$title' }, lastUpdated: { $max: '$createdAt' } } }, { $sort: { lastUpdated: -1 } }, { $limit: 50 }]); return res.json(sessions); } catch (error) { return next(error); } };
+exports.getChatHistory = async (req, res, next) => { try { const history = await chatModel.find({ user: req.user._id, conversationId: req.params.id }).sort({ createdAt: 1 }).select('message sender createdAt'); return res.json(history); } catch (error) { return next(error); } };

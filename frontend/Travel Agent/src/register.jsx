@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './App.css';
+import { api } from './api.js';
 
 const Register = () => {
-    const BackendUrl = 'https://express-backend-quh7.onrender.com';
     const [formData, setFormData] = useState({ username: '', email: '', password: '' });
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -20,8 +20,9 @@ const Register = () => {
         setError(''); setMessage('');
         setLoading(true);
         try {
-            const response = await axios.post(`${BackendUrl}/api/auth/register`, formData);
+            const response = await api.post('/api/auth/register', formData);
             if (response.status === 201 || response.status === 200) {
+                sessionStorage.setItem('verificationEmail', formData.email);
                 setMessage('Account created! Redirecting to email verification…');
                 setTimeout(() => navigate('/verifyemail'), 2000);
             }
@@ -33,10 +34,16 @@ const Register = () => {
     };
 
     return (
-        <div className="auth-wrap">
-            <div className="auth-bg-orb" />
-            <div className="auth-card">
-                <div className="auth-logo">Azen<span>tix</span></div>
+        <div className="auth-wrap auth-split">
+            <section className="auth-showcase">
+                <div className="auth-brand">Azen<span>tix</span></div>
+                <span className="eyebrow">YOUR PRIVATE TRAVEL DESK</span>
+                <h1>Plans that feel<br /><em>made for you.</em></h1>
+                <p>From a first idea to an unforgettable itinerary, your AI concierge is ready.</p>
+                <div className="auth-trip-card"><span>⌁</span><div><b>Ideas become itineraries</b><small>Personal, practical, beautifully simple</small></div></div>
+            </section>
+            <section className="auth-card">
+                <div className="auth-logo">Join Azen<span>tix</span></div>
                 <h1 className="auth-title">Create account</h1>
                 <p className="auth-subtitle">Join thousands of smart explorers</p>
                 <div className="auth-divider" />
@@ -66,14 +73,14 @@ const Register = () => {
                     </div>
                     <div className="auth-field">
                         <label className="auth-label">Password</label>
-                        <input
+                        <div className="password-field"><input
                             className="auth-input"
-                            type="password"
+                            type={showPassword ? 'text' : 'password'}
                             name="password"
                             placeholder="••••••••"
                             onChange={handleChange}
                             required
-                        />
+                        /><button className="password-toggle" type="button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button></div>
                     </div>
                     {error && <div className="auth-error">{error}</div>}
                     {message && <div className="auth-success">{message}</div>}
@@ -86,7 +93,7 @@ const Register = () => {
                     Already have an account?{' '}
                     <a href="/login">Sign in</a>
                 </p>
-            </div>
+            </section>
         </div>
     );
 };

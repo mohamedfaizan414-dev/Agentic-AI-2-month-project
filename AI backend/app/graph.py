@@ -16,7 +16,6 @@ from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, System
 
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent   # ✅ FIX 1: correct import
 
 load_dotenv()
@@ -24,8 +23,9 @@ load_dotenv()
 # LLM SETUP
 
 llm = ChatGroq(
-    model="llama-3.1-8b-instant",   # ✅ FIX 2: valid Groq model
+    model=os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"),
     temperature=0,
+    max_tokens=1200,
 )
 
 # ✅ FIX 3: removed broken client.pull_prompt — define system prompt directly
@@ -110,7 +110,7 @@ def check_train_availability(source: str, destination: str, date: str) -> str:
     }
     print("train")
     try:
-        response = requests.get(url, headers=headers, params=params)
+        response = requests.get(url, headers=headers, params=params, timeout=8)
         response.raise_for_status() # Check for errors
         return str(response.json()) # LangChain tools must return a string
     except Exception as e:
@@ -126,7 +126,7 @@ def currency_exchanger(base_amount: float, base_currency: str, target_currency: 
     )
     print("[tool] currency_exchanger used")
     try:
-        data = requests.get(url).json()
+        data = requests.get(url, timeout=8).json()
         rate = data["conversion_rate"]
         converted = base_amount * rate
         return f"{base_amount} {base_currency} = {converted:.2f} {target_currency} (rate: {rate})"
@@ -145,7 +145,7 @@ def weather_tool(location: str) -> str:
     )
     print("[tool] weather_tool used")
     try:
-        response = requests.get(url).json()
+        response = requests.get(url, timeout=8).json()
         loc_name = response["location"]["name"]
         temp     = response["current"]["temperature"]
         desc     = response["current"]["weather_descriptions"][0]
@@ -267,35 +267,9 @@ agent = create_react_agent(
 # NODE 1 — EXTRACT
 
 def extract(state: TravelState) -> dict:
-    today = datetime.today().date()
-    prompt_text = f"""
-Today's date is: {today}
-
-Extract travel details from the conversation below.
-Return ONLY valid JSON — no extra text:
-{{
-  "current_location": string or null,
-  "destination": string or null,
-  "departure_date": string or null,
-  "return_date": string or null,
-  "budget": number or null,
-  "travelers": number or null
-}}
-
-Conversation:
-{state["messages"]}
-"""
-    response = llm.invoke(prompt_text)
-    data = safe_json_extract(response.content)
-
-    return {
-        "current_location": data.get("current_location") or state.get("current_location"),
-        "destination":      data.get("destination")      or state.get("destination"),
-        "departure_date":   data.get("departure_date")   or state.get("departure_date"),
-        "return_date":      data.get("return_date")      or state.get("return_date"),
-        "budget":           data.get("budget")           or state.get("budget"),
-        "travelers":        data.get("travelers")        or state.get("travelers"),
-    }
+    # Conversation history is supplied by the API gateway on every request.
+    # Avoiding a second extraction-model call cuts normal turn latency roughly in half.
+    return {}
 
 # NODE 2 — VALIDATE
 
@@ -408,10 +382,11 @@ Use these EXACT ISO dates — do NOT reinterpret them:
   Departure : {state.get("departure_date")}
   Return    : {state.get("return_date")}
 
-From            : {state.get("current_location")}
-To              : {state.get("destination")}
-Total Budget    : {state.get("budget")}
-Number of People: {state.get("travelers")}
+Use the complete conversation below as the source of truth for all traveller
+details. If a detail is absent, state the assumption clearly.
+
+Conversation:
+{state["messages"]}
 
 Make it high-quality, practical, and personalised. Include transport, accommodation
 suggestions, daily activities, food recommendations, and budget breakdown.
@@ -459,4 +434,4 @@ graph.add_conditional_edges(
 
 graph.add_edge("final", END)
 
-workflow = graph.compile(checkpointer=MemorySaver())
+workflow = graph.compile()

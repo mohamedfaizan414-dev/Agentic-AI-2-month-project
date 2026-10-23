@@ -1,17 +1,28 @@
 # app/api.py
 
 from fastapi import APIRouter
-from langchain_core.messages import HumanMessage
-from models import ChatRequest, ChatResponse
-from graph import workflow  # your compiled graph
+from langchain_core.messages import AIMessage, HumanMessage
+import asyncio
+from .models import ChatRequest, ChatResponse
+from .graph import workflow
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
 @router.post("/", response_model=ChatResponse)
-def chat(request: ChatRequest):
+async def chat(request: ChatRequest):
+
+    history = request.history or [
+        {"role": "user", "content": request.message}
+    ]
+    messages = [
+        HumanMessage(content=turn.content if hasattr(turn, "content") else turn["content"])
+        if (turn.role if hasattr(turn, "role") else turn["role"]) == "user"
+        else AIMessage(content=turn.content if hasattr(turn, "content") else turn["content"])
+        for turn in history
+    ]
 
     state = {
-        "messages": [HumanMessage(content=request.message)],
+        "messages": messages,
         "travel_data": {},
         "destination": None,
         "departure_date": None,
@@ -20,7 +31,7 @@ def chat(request: ChatRequest):
         "travelers": None,
     }
 
-    result = workflow.invoke(
+    result = await asyncio.to_thread(workflow.invoke,
         state,
         config={"configurable": {"thread_id": request.conversation_id}}
     )

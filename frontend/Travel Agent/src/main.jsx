@@ -4,10 +4,7 @@ import Login from './login.jsx'
 import Register from './register.jsx'
 import Chat from './chat.jsx'
 import Landing from './landingpage.jsx'
-import axios from 'axios'
 import VerifyEmail from './verifyemail.jsx'
-
-axios.defaults.withCredentials = true; 
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter> 

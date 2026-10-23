@@ -1,106 +1,27 @@
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const userModel = require('../model/user.model.js');
+const { verify, welcome } = require('../middleware/email.js');
 
-const userModel = require("../model/user.model.js")
-const jwt = require("jsonwebtoken")
-const bcrypt = require("bcryptjs")
-const { verify, welcome } = require("../middleware/email.js")
+const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
+const signToken = (user) => jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
+const verificationCode = () => crypto.randomInt(100000, 1000000).toString();
 
-async function registerUser(req,res){
-
-    const {username,email,password} = req.body
-
-    const isUserExists = await userModel.findOne({
-        $or:[
-            { username },
-            { email }
-        ]
-    })
-   
-    if (isUserExists){
-        return res.status(409).json({message: "User already exists"})
-    }
-
-    const hash = await bcrypt.hash(password, 10)
-    verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const user = await userModel.create({
-        username,
-        email,
-        password: hash,
-        verficationCode: verificationCode,
-        
-
-    })
-
-    const token = jwt.sign({
-        id : user._id
-    },process.env.JWT_SECRET)
-    
-
-    await verify(user.email,verificationCode)
-    
-
-    // ✅ send token instead of cookie
-    res.status(201).json({
-        message:"User registered succesfully",
-        user: user.username,
-        token
-    })
+async function registerUser(req, res, next) {
+  try {
+    const username = String(req.body.username || '').trim(); const email = normalizeEmail(req.body.email); const password = String(req.body.password || '');
+    if (username.length < 3 || username.length > 40 || !/^\S+$/.test(username)) return res.status(400).json({ message: 'Username must be 3–40 characters with no spaces.' });
+    if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ message: 'Enter a valid email address.' });
+    if (password.length < 8) return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+    if (await userModel.exists({ $or: [{ username }, { email }] })) return res.status(409).json({ message: 'An account with that username or email already exists.' });
+    const code = verificationCode();
+    const user = await userModel.create({ username, email, password: await bcrypt.hash(password, 12), verficationCode: code, verificationCodeExpiresAt: new Date(Date.now() + 10 * 60 * 1000) });
+    try { await verify(user.email, code); } catch (error) { console.error('Verification email failed', error.message); }
+    return res.status(201).json({ message: 'Account created. Check your email for the verification code.', email: user.email });
+  } catch (error) { return next(error); }
 }
-
-async function verifyEmail(req,res){
-    const {otp} = req.body
-    user = await userModel.findOne({verficationCode: otp})
-
-    if(!user){
-        return res.status(400).json({message: "Invalid OTP"})
-    }
-    user.isVerified = true
-    user.verficationCode = undefined
-    await user.save()
-    await welcome(user.email, user.username)
-    res.status(200).json({message: "Email verified successfully"})
-}
-
-async function loginUser(req,res){
-    const {username,email,password} = req.body
-
-    const user = await userModel.findOne({
-        $or:[
-            {username},
-            {email}
-        ]
-    })
-
-    if(!user){
-        return res.status(401).json({message: "invalid credentials"})
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password)
-
-    if (!isPasswordValid){
-        return res.status(401).json({message: "invalid credentials"})
-    }
-
-    const token  = jwt.sign({
-        id: user._id,
-    },process.env.JWT_SECRET)
-
-   
-    res.status(200).json({
-        message: "user logged in succesfully",
-        user: user.username,
-        token
-    })
-}
-
-// getMe stays SAME
-async function getMe(req, res) {
-    try {
-        const user = await userModel.findById(req.user._id).select("-password")
-        if (!user) return res.status(404).json({ message: "User not found" })
-        res.status(200).json(user)
-    } catch (error) {
-        res.status(500).json({ message: "Server error" })
-    }
-}
-
-module.exports = { registerUser, loginUser, getMe, verifyEmail }
+async function verifyEmail(req, res, next) { try { const email = normalizeEmail(req.body.email); const otp = String(req.body.otp || ''); const user = await userModel.findOne({ email, verficationCode: otp, verificationCodeExpiresAt: { $gt: new Date() } }); if (!user) return res.status(400).json({ message: 'That code is invalid or has expired.' }); user.isVerified = true; user.verficationCode = undefined; user.verificationCodeExpiresAt = undefined; await user.save(); welcome(user.email, user.username).catch((error) => console.error('Welcome email failed', error.message)); return res.json({ message: 'Email verified. You can now sign in.' }); } catch (error) { return next(error); } }
+async function loginUser(req, res, next) { try { const identifier = String(req.body.username || req.body.email || '').trim(); const password = String(req.body.password || ''); const user = await userModel.findOne({ $or: [{ username: identifier }, { email: normalizeEmail(identifier) }] }); if (!user || !(await bcrypt.compare(password, user.password))) return res.status(401).json({ message: 'Incorrect email or password.' }); if (!user.isVerified) return res.status(403).json({ message: 'Verify your email before signing in.' }); return res.json({ message: 'Signed in successfully.', user: user.username, token: signToken(user) }); } catch (error) { return next(error); } }
+async function getMe(req, res) { return res.json(req.user); }
+module.exports = { registerUser, loginUser, getMe, verifyEmail };
