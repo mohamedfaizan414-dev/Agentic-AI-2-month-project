@@ -8,7 +8,7 @@ const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
 const signToken = (user) => jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
 const verificationCode = () => crypto.randomInt(100000, 1000000).toString();
 const verificationExpiry = () => new Date(Date.now() + 10 * 60 * 1000);
-const sendVerification = (user, code) => verify(user.email, code).catch((error) => console.error('Verification email failed:', error.message));
+const deliverVerification = (user, code) => verify(user.email, code);
 
 async function registerUser(req, res, next) {
   try {
@@ -20,7 +20,7 @@ async function registerUser(req, res, next) {
 
     const code = verificationCode();
     const user = await userModel.create({ username, email, password: await bcrypt.hash(password, 10), verficationCode: code, verificationCodeExpiresAt: verificationExpiry(), verificationSentAt: new Date() });
-    sendVerification(user, code);
+    void deliverVerification(user, code).catch((error) => console.error('Verification email failed:', error.message));
     return res.status(201).json({ message: 'Account created.', email: user.email, verificationRequired: true });
   } catch (error) { return next(error); }
 }
@@ -32,7 +32,7 @@ async function resendVerification(req, res, next) {
     if (user.isVerified) return res.status(409).json({ message: 'This email is already verified. Please sign in.' });
     if (user.verificationSentAt && Date.now() - user.verificationSentAt.getTime() < 60_000) return res.status(429).json({ message: 'Please wait one minute before requesting another code.' });
     const code = verificationCode(); user.verficationCode = code; user.verificationCodeExpiresAt = verificationExpiry(); user.verificationSentAt = new Date(); await user.save();
-    sendVerification(user, code);
+    await deliverVerification(user, code);
     return res.json({ message: 'A fresh verification code is on its way.', email: user.email });
   } catch (error) { return next(error); }
 }
