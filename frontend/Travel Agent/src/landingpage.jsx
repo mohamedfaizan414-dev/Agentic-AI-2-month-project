@@ -28,7 +28,7 @@ const LandingPage = () => {
                         <div className="hero-cta"><button className="btn-hero" onClick={() => navigate('/register')}>Start Planning Free</button><button className="btn-hero-out" onClick={() => navigate('/login')}>Explore your plans</button></div>
                     </div>
                     <div className="hero-preview" aria-label="A preview of a personalised travel itinerary">
-                        <div className="preview-top"><span>✦ Your next escape</span><small>Personalized</small></div>
+                        <div className="preview-top"><span>Your next escape</span><small>Personalized</small></div>
                         <div className="preview-place"><span>JAPAN</span><strong>Tokyo → Kyoto</strong><small>12–19 October · 7 nights</small></div>
                         <div className="preview-days"><div><b>01</b><span>Arrive in Tokyo<br /><small>Shibuya at golden hour</small></span></div><div><b>03</b><span>Mountain air<br /><small>Day trip to Hakone</small></span></div><div><b>05</b><span>Slow Kyoto<br /><small>Tea, temples, evening walk</small></span></div></div>
                         <div className="preview-footer"><span>Built around your pace</span><span>→</span></div>
@@ -53,7 +53,7 @@ const LandingPage = () => {
                         <div className="stat-label">Itineraries</div>
                     </div>
                     <div>
-                        <div className="stat-val">4.9★</div>
+                        <div className="stat-val">4.9</div>
                         <div className="stat-label">Avg Rating</div>
                     </div>
                 </div>
@@ -65,17 +65,17 @@ const LandingPage = () => {
                 <h2 className="features-heading">Built for the modern explorer</h2>
                 <div className="features-grid">
                     <div className="feature-card">
-                        <div className="feature-icon">🌍</div>
+                        <div className="feature-index">01</div>
                         <h3>Global Intelligence</h3>
                         <p>Deep knowledge of 190+ countries, local customs, visa requirements, and off-the-beaten-path secrets most guides miss.</p>
                     </div>
                     <div className="feature-card">
-                        <div className="feature-icon">💰</div>
+                        <div className="feature-index">02</div>
                         <h3>Budget Mastery</h3>
                         <p>Real-time cost estimates, currency conversion, and smart budget allocation so you never overspend on a trip again.</p>
                     </div>
                     <div className="feature-card">
-                        <div className="feature-icon">⚡</div>
+                        <div className="feature-index">03</div>
                         <h3>Instant Concierge</h3>
                         <p>Natural conversation, like texting a seasoned local guide who knows every corner of the city you're visiting.</p>
                     </div>

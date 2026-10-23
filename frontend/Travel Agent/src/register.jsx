@@ -1,101 +1,11 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './App.css';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from './api.js';
+import './App.css';
 
-const Register = () => {
-    const [formData, setFormData] = useState({ username: '', email: '', password: '' });
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const navigate = useNavigate();
-
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError(''); setMessage('');
-        setLoading(true);
-        try {
-            const response = await api.post('/api/auth/register', formData);
-            if (response.status === 201 || response.status === 200) {
-                sessionStorage.setItem('verificationEmail', formData.email);
-                setMessage('Account created! Redirecting to email verification…');
-                setTimeout(() => navigate('/verifyemail'), 2000);
-            }
-        } catch (err) {
-            setError(err.response?.data?.message || 'Registration failed. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="auth-wrap auth-split">
-            <section className="auth-showcase">
-                <div className="auth-brand">Azen<span>tix</span></div>
-                <span className="eyebrow">YOUR PRIVATE TRAVEL DESK</span>
-                <h1>Plans that feel<br /><em>made for you.</em></h1>
-                <p>From a first idea to an unforgettable itinerary, your AI concierge is ready.</p>
-                <div className="auth-trip-card"><span>⌁</span><div><b>Ideas become itineraries</b><small>Personal, practical, beautifully simple</small></div></div>
-            </section>
-            <section className="auth-card">
-                <div className="auth-logo">Join Azen<span>tix</span></div>
-                <h1 className="auth-title">Create account</h1>
-                <p className="auth-subtitle">Join thousands of smart explorers</p>
-                <div className="auth-divider" />
-
-                <form className="auth-form" onSubmit={handleSubmit}>
-                    <div className="auth-field">
-                        <label className="auth-label">Username</label>
-                        <input
-                            className="auth-input"
-                            type="text"
-                            name="username"
-                            placeholder="wanderer42"
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
-                    <div className="auth-field">
-                        <label className="auth-label">Email</label>
-                        <input
-                            className="auth-input"
-                            type="email"
-                            name="email"
-                            placeholder="you@example.com"
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
-                    <div className="auth-field">
-                        <label className="auth-label">Password</label>
-                        <div className="password-field"><input
-                            className="auth-input"
-                            type={showPassword ? 'text' : 'password'}
-                            name="password"
-                            placeholder="••••••••"
-                            onChange={handleChange}
-                            required
-                        /><button className="password-toggle" type="button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button></div>
-                    </div>
-                    {error && <div className="auth-error">{error}</div>}
-                    {message && <div className="auth-success">{message}</div>}
-                    <button className="auth-btn" type="submit" disabled={loading}>
-                        {loading ? 'Creating account…' : 'Create Account'}
-                    </button>
-                </form>
-
-                <p className="auth-footer">
-                    Already have an account?{' '}
-                    <a href="/login">Sign in</a>
-                </p>
-            </section>
-        </div>
-    );
-};
-
-export default Register;
+export default function Register() {
+  const [form, setForm] = useState({ username: '', email: '', password: '' }); const [error, setError] = useState(''); const [loading, setLoading] = useState(false); const [showPassword, setShowPassword] = useState(false); const navigate = useNavigate();
+  const change = (event) => setForm({ ...form, [event.target.name]: event.target.value });
+  const submit = async (event) => { event.preventDefault(); setError(''); setLoading(true); try { const { data } = await api.post('/api/auth/register', form); sessionStorage.setItem('verificationEmail', data.email); navigate('/verifyemail', { replace: true }); } catch (errorResponse) { setError(errorResponse.response?.data?.message || 'We could not create your account. Please try again.'); } finally { setLoading(false); } };
+  return <div className="auth-page"><aside className="auth-panel"><Link className="wordmark" to="/">ATLAS<span>.</span></Link><div className="auth-panel-copy"><p className="kicker">A QUIETER WAY TO PLAN</p><h1>Go further, <em>better.</em></h1><p>One place for the decisions that turn an idea into a genuinely good trip.</p></div><div className="auth-panel-note"><span>02</span><p>Start with a thought. Leave with a plan that feels like yours.</p></div></aside><main className="auth-main"><div className="auth-form-wrap"><Link className="mobile-wordmark" to="/">ATLAS<span>.</span></Link><p className="kicker">CREATE YOUR ACCOUNT</p><h2>Make your next trip count.</h2><p className="auth-lead">It takes less than a minute to get started.</p><form className="auth-form" onSubmit={submit}><label>Your name<input name="username" value={form.username} onChange={change} autoComplete="username" minLength="3" required /></label><label>Email address<input name="email" type="email" value={form.email} onChange={change} autoComplete="email" required /></label><label>Create a password<span className="field-control"><input name="password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={change} autoComplete="new-password" minLength="8" required /><button type="button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button></span></label>{error && <p className="form-alert" role="alert">{error}</p>}<button className="primary-button" disabled={loading}>{loading ? 'Creating your account…' : 'Create account'}</button></form><p className="auth-switch">Already have an account? <Link to="/login">Sign in</Link></p></div></main></div>;
+}
