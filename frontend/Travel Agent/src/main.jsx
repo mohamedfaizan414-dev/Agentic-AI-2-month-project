@@ -1,6 +1,8 @@
 import { BrowserRouter,Routes,Route } from 'react-router-dom'
 import { createRoot } from 'react-dom/client'
 import { lazy, Suspense } from 'react'
+import './App.css'
+import { AppErrorBoundary, LoadingScreen } from './app-shell.jsx'
 
 const Landing = lazy(() => import('./landingpage.jsx'))
 const Login = lazy(() => import('./login.jsx'))
@@ -11,7 +13,7 @@ const HowItWorks = lazy(() => import('./howitworks.jsx'))
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter> 
-  <Suspense fallback={<div className="page-loading">Loading Atlas</div>}><Routes>
+  <AppErrorBoundary><Suspense fallback={<LoadingScreen />}><Routes>
     <Route path='/' element={<Landing/>}>
 </Route>
 <Route path='/login' element={<Login/>}>
@@ -21,7 +23,7 @@ createRoot(document.getElementById('root')).render(
 <Route path='/verifyemail' element={<VerifyEmail/>}></Route>
 <Route path='/how-it-works' element={<HowItWorks/>}></Route>
 
-  </Routes></Suspense>
+  </Routes></Suspense></AppErrorBoundary>
   </BrowserRouter>
  
 )
