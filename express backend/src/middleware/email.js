@@ -1,6 +1,15 @@
 const verifyEmail = require('../templates/email.verify');
 const welcomeEmail = require('../templates/email.welcome');
 
+function deliveryError(provider, status, detail) {
+  const error = new Error(`${provider} rejected the email request (${status}): ${detail.slice(0, 300)}`);
+  error.status = 503;
+  error.publicMessage = status === 401
+    ? 'Email delivery is temporarily unavailable. Please try again in a moment.'
+    : 'We could not send that email right now. Please try again shortly.';
+  return error;
+}
+
 async function sendWithBrevo({ to, subject, text, html }) {
   const senderEmail = process.env.BREVO_SENDER_EMAIL;
   if (!senderEmail) {
@@ -26,7 +35,7 @@ async function sendWithBrevo({ to, subject, text, html }) {
 
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`Brevo rejected the email request (${response.status}): ${detail.slice(0, 300)}`);
+    throw deliveryError('Brevo', response.status, detail);
   }
   return response.json();
 }
@@ -40,7 +49,7 @@ async function sendWithResend({ to, subject, text, html }) {
   });
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`Email API rejected the request (${response.status}): ${detail.slice(0, 300)}`);
+    throw deliveryError('Email API', response.status, detail);
   }
   return response.json();
 }

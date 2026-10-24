@@ -14,5 +14,5 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api', chatRoutes);
 app.use('/api/auth', authRoutes);
 app.use((req, res) => res.status(404).json({ message: 'Route not found.' }));
-app.use((error, req, res, next) => { console.error(error); res.status(error.status || 500).json({ message: error.status ? error.message : 'Something went wrong. Please try again.' }); });
+app.use((error, req, res, next) => { console.error(error); res.status(error.status || 500).json({ message: error.publicMessage || (error.status ? error.message : 'Something went wrong. Please try again.') }); });
 module.exports = app;
