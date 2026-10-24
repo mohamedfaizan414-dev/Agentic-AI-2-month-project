@@ -20,7 +20,12 @@ async function registerUser(req, res, next) {
 
     const code = verificationCode();
     const user = await userModel.create({ username, email, password: await bcrypt.hash(password, 10), verficationCode: code, verificationCodeExpiresAt: verificationExpiry(), verificationSentAt: new Date() });
-    void deliverVerification(user, code).catch((error) => console.error('Verification email failed:', error.message));
+    try {
+      await deliverVerification(user, code);
+    } catch (emailError) {
+      console.error('Verification email failed:', emailError.message);
+      return res.status(503).json({ message: 'Your account was created, but we could not send the verification code yet. Open the verification page and try again.', email: user.email, verificationRequired: true });
+    }
     return res.status(201).json({ message: 'Account created.', email: user.email, verificationRequired: true });
   } catch (error) { return next(error); }
 }
@@ -31,8 +36,9 @@ async function resendVerification(req, res, next) {
     if (!user) return res.status(200).json({ message: 'If that account exists, a verification email is on its way.' });
     if (user.isVerified) return res.status(409).json({ message: 'This email is already verified. Please sign in.' });
     if (user.verificationSentAt && Date.now() - user.verificationSentAt.getTime() < 60_000) return res.status(429).json({ message: 'Please wait one minute before requesting another code.' });
-    const code = verificationCode(); user.verficationCode = code; user.verificationCodeExpiresAt = verificationExpiry(); user.verificationSentAt = new Date(); await user.save();
+    const code = verificationCode();
     await deliverVerification(user, code);
+    user.verficationCode = code; user.verificationCodeExpiresAt = verificationExpiry(); user.verificationSentAt = new Date(); await user.save();
     return res.json({ message: 'A fresh verification code is on its way.', email: user.email });
   } catch (error) { return next(error); }
 }

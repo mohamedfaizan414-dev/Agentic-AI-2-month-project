@@ -1,15 +1,17 @@
 import { BrowserRouter,Routes,Route } from 'react-router-dom'
 import { createRoot } from 'react-dom/client'
-import Login from './login.jsx'
-import Register from './register.jsx'
-import Chat from './chat.jsx'
-import Landing from './landingpage.jsx'
-import VerifyEmail from './verifyemail.jsx'
-import HowItWorks from './howitworks.jsx'
+import { lazy, Suspense } from 'react'
+
+const Landing = lazy(() => import('./landingpage.jsx'))
+const Login = lazy(() => import('./login.jsx'))
+const Register = lazy(() => import('./register.jsx'))
+const Chat = lazy(() => import('./chat.jsx'))
+const VerifyEmail = lazy(() => import('./verifyemail.jsx'))
+const HowItWorks = lazy(() => import('./howitworks.jsx'))
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter> 
-  <Routes>
+  <Suspense fallback={<div className="page-loading">Loading Atlas</div>}><Routes>
     <Route path='/' element={<Landing/>}>
 </Route>
 <Route path='/login' element={<Login/>}>
@@ -19,7 +21,7 @@ createRoot(document.getElementById('root')).render(
 <Route path='/verifyemail' element={<VerifyEmail/>}></Route>
 <Route path='/how-it-works' element={<HowItWorks/>}></Route>
 
-  </Routes>
+  </Routes></Suspense>
   </BrowserRouter>
  
 )

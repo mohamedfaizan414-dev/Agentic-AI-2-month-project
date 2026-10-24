@@ -13,8 +13,11 @@ exports.sendMessage = async (req, res, next) => {
     await chatModel.create({ user: req.user._id, conversationId, message, sender: 'user', title });
     const context = await chatModel.find({ user: req.user._id, conversationId }).sort({ createdAt: -1 }).limit(12).select('message sender -_id').lean();
     context.reverse();
+    // The current message is sent separately below; excluding it from history avoids
+    // making the AI process the same text twice on every request.
+    const priorTurns = context.slice(0, -1);
     let response;
-    try { response = await aiClient.post('/chat', { conversation_id: conversationId, message, history: context.map((turn) => ({ role: turn.sender === 'bot' ? 'assistant' : 'user', content: turn.message })) }); }
+    try { response = await aiClient.post('/chat', { conversation_id: conversationId, message, history: priorTurns.map((turn) => ({ role: turn.sender === 'bot' ? 'assistant' : 'user', content: turn.message })) }); }
     catch (error) { console.error('AI upstream error:', error.code || error.response?.status); return res.status(503).json({ message: 'Our travel concierge is temporarily unavailable. Please try again shortly.' }); }
     const reply = cleanMessage(response.data?.reply);
     if (!reply) return res.status(502).json({ message: 'The concierge returned an empty response. Please try again.' });
