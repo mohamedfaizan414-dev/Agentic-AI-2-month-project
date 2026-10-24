@@ -1,19 +1,17 @@
 import { BrowserRouter,Routes,Route } from 'react-router-dom'
 import { createRoot } from 'react-dom/client'
-import { lazy, Suspense } from 'react'
 import './App.css'
-import { AppErrorBoundary, LoadingScreen } from './app-shell.jsx'
-
-const Landing = lazy(() => import('./landingpage.jsx'))
-const Login = lazy(() => import('./login.jsx'))
-const Register = lazy(() => import('./register.jsx'))
-const Chat = lazy(() => import('./chat.jsx'))
-const VerifyEmail = lazy(() => import('./verifyemail.jsx'))
-const HowItWorks = lazy(() => import('./howitworks.jsx'))
+import { AppErrorBoundary } from './app-shell.jsx'
+import Login from './login.jsx'
+import Register from './register.jsx'
+import Chat from './chat.jsx'
+import Landing from './landingpage.jsx'
+import VerifyEmail from './verifyemail.jsx'
+import HowItWorks from './howitworks.jsx'
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter> 
-  <AppErrorBoundary><Suspense fallback={<LoadingScreen />}><Routes>
+  <AppErrorBoundary><Routes>
     <Route path='/' element={<Landing/>}>
 </Route>
 <Route path='/login' element={<Login/>}>
@@ -23,7 +21,7 @@ createRoot(document.getElementById('root')).render(
 <Route path='/verifyemail' element={<VerifyEmail/>}></Route>
 <Route path='/how-it-works' element={<HowItWorks/>}></Route>
 
-  </Routes></Suspense></AppErrorBoundary>
+  </Routes></AppErrorBoundary>
   </BrowserRouter>
  
 )
