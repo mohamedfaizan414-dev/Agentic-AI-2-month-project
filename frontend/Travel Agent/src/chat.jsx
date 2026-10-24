@@ -14,7 +14,8 @@ export default function ChatPage() {
   const scrollRef = useRef(null); const composerRef = useRef(null); const navigate = useNavigate();
   const refreshSessions = async () => { const { data } = await api.get('/api/sessions'); setSessions(data); };
   useEffect(() => { let active = true; Promise.all([api.get('/api/auth/me'), api.get('/api/sessions')]).then(([me, saved]) => { if (active) { setUser(me.data); setSessions(saved.data); } }).catch(() => navigate('/login', { replace: true })); return () => { active = false; }; }, [navigate]);
-  useEffect(() => scrollRef.current?.scrollIntoView({ behavior: 'smooth' }), [messages, loading]);
+  // Braces matter: newer Chrome returns a Promise from smooth scrollIntoView, and React would treat it as the effect cleanup.
+  useEffect(() => { scrollRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, loading]);
   const loadChat = async (id) => { if (loading || activeId === id) return; setLoading(true); setNotice(''); setActiveId(id); try { const { data } = await api.get(`/api/history/${id}`); setMessages(data); setSidebarOpen(false); } catch { setNotice('That conversation could not be opened. Please try again.'); } finally { setLoading(false); } };
   const newChat = () => { if (!loading) { setActiveId(null); setMessages([]); setNotice(''); setSidebarOpen(false); } };
   const updateInput = (event) => { setInput(event.target.value); event.target.style.height = 'auto'; event.target.style.height = `${Math.min(event.target.scrollHeight, 140)}px`; };
